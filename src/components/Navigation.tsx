@@ -65,9 +65,6 @@ const Navigation = () => {
                 }}
               />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Aliva
-            </span>
           </div>
 
           {/* Desktop Navigation - Streamlined */}
