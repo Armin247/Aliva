@@ -25,7 +25,7 @@ const Navigation = () => {
 
   const handleGetStarted = () => {
     toast({
-      title: "Welcome to NutriWise Pro! 🎉",
+      title: "Welcome to Aliva! 🎉",
       description: "AI consultation is starting soon. Get ready for personalized nutrition advice!",
     });
     scrollToSection('consultation');
@@ -58,7 +58,7 @@ const Navigation = () => {
               <Utensils className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              NutriWise Pro
+              Aliva
             </span>
           </div>
 
@@ -106,7 +106,7 @@ const Navigation = () => {
                   Meal Planning
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => scrollToSection('about')}>
-                  About NutriWise Pro
+                  About Aliva
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

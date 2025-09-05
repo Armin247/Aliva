@@ -5,7 +5,7 @@ const testimonials = [
   {
     name: "Sarah Johnson",
     role: "Busy Professional",
-    content: "NutriWise Pro has completely transformed how I approach eating. The AI consultant gives me personalized advice that actually fits my hectic schedule. I've lost 15 pounds and feel more energetic than ever!",
+    content: "Aliva has completely transformed how I approach eating. The AI consultant gives me personalized advice that actually fits my hectic schedule. I've lost 15 pounds and feel more energetic than ever!",
     rating: 5,
     avatar: "SJ"
   },
@@ -37,7 +37,7 @@ const TestimonialsSection = () => {
             </span>
           </h2>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-            See how NutriWise Pro is helping people achieve their health goals with personalized AI guidance.
+            See how Aliva is helping people achieve their health goals with personalized AI guidance.
           </p>
         </div>
 

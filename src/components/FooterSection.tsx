@@ -13,7 +13,7 @@ const FooterSection = () => {
                 <Utensils className="w-6 h-6 text-white" />
               </div>
               <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                NutriWise Pro
+                Aliva
               </span>
             </div>
             <p className="text-muted-foreground mb-6 leading-relaxed">
@@ -121,7 +121,7 @@ const FooterSection = () => {
         <div className="border-t border-border/50 mt-12 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <p className="text-muted-foreground mb-4 md:mb-0">
-              © 2024 NutriWise Pro. All rights reserved. Made with ❤️ for healthier living.
+              © 2024 Aliva. All rights reserved. Made with ❤️ for healthier living.
             </p>
             <div className="flex space-x-6">
               <a href="#privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
