@@ -94,7 +94,7 @@ Installation
 
 Clone the repository
 
-bashgit clone https://github.com/Armin247/nutri-wise-duo.git
+bashgit clone https://github.com/Armin247/Aliva
 cd nutri-wise-duo
 
 Install dependencies
