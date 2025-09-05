@@ -1,73 +1,134 @@
-# Welcome to your Lovable project
+🥗 Aliva
+<div align="center">
+Your AI-Powered Personal Nutritionist
+Professional nutrition guidance meets cutting-edge AI technology
+</div>
 
-## Project info
+🌟 Overview
+Aliva revolutionises personal nutrition by combining the intelligence of Gemini AI and ChatGPT with real-world food data. Get personalised dietary advice, discover healthy restaurant options, and master home cooking - all powered by professional-grade AI technology.
+✨ Why Aliva?
 
-**URL**: https://lovable.dev/projects/cdce25c6-a2bd-48fc-b028-992324a16dbe
+🤖 Dual AI Intelligence - First platform combining Gemini and ChatGPT for comprehensive nutrition analysis
+🍽️ Smart Restaurant Discovery - Find healthy options at 500,000+ restaurants worldwide
+👨‍🍳 Personalised Cooking Solutions - Custom recipes with step-by-step guidance
+📊 Professional Insights - Dietitian-level expertise accessible to everyone
+🎨 Modern Experience - Beautiful, intuitive design that makes healthy eating enjoyable
 
-## How can I edit this code?
 
-There are several ways of editing your application.
+🎯 Features
+🤖 AI-Powered Consultation
 
-**Use Lovable**
+Dual AI Analysis - Leverages both Gemini and ChatGPT for comprehensive nutrition insights
+Real-time Chat - Professional nutritionist persona available 24/7
+Personalised Recommendations - Tailored advice based on your goals and preferences
+Evidence-based Guidance - Scientific backing for all dietary recommendations
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/cdce25c6-a2bd-48fc-b028-992324a16dbe) and start prompting.
+🍕 Smart Restaurant Discovery
 
-Changes made via Lovable will be committed automatically to this repo.
+Location-based Search - Find healthy options near you using Google Places API
+Menu Analysis - Detailed nutritional breakdown of popular menu items
+Dietary Filtering - Filter by vegan, keto, gluten-free, and more
+Delivery Integration - Direct ordering through Uber Eats, DoorDash
+Health Scoring - AI-powered ratings for restaurant meals
 
-**Use your preferred IDE**
+👨‍🍳 Home Cooking Excellence
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Custom Recipe Generation - AI creates recipes based on your ingredients
+Step-by-step Instructions - Professional cooking guidance with video support
+Nutritional Breakdown - Complete macro and micronutrient analysis
+Meal Prep Planning - Batch cooking guides for busy schedules
+Smart Shopping Lists - Optimised grocery lists with budget considerations
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+📱 Modern User Experience
 
-Follow these steps:
+Responsive Design - Perfect experience on desktop, tablet, and mobile
+Dark Mode Support - Easy on the eyes with a beautiful dark theme
+Offline Capability - Access saved recipes and meal plans without internet
+Progress Tracking - Visual charts showing your nutrition journey
+Social Features - Share recipes and connect with a health-conscious community
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+🛠 Tech Stack
+Frontend
 
-# Step 3: Install the necessary dependencies.
-npm i
+Framework: React 18+ with TypeScript
+Styling: Tailwind CSS with custom design system
+UI Components: Radix UI for accessibility
+Animations: Framer Motion for smooth interactions
+Charts: Recharts for nutrition data visualisation
+Icons: Lucide React for consistent iconography
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+Backend
+
+Runtime: Node.js with Express.js
+Database: PostgreSQL with Prisma ORM
+Authentication: NextAuth.js with JWT tokens
+File Storage: Cloudinary for images and media
+Real-time: WebSocket connections for live chat
+Caching: Redis for performance optimisation
+
+AI & APIs
+
+AI Models: Google Gemini Pro + OpenAI GPT-4
+Restaurant Data: Google Places API, Yelp Fusion API
+Nutrition Database: USDA Food Data Central, Edamam API
+Maps: Google Maps JavaScript API
+Payments: Stripe for subscription management
+Email: SendGrid for transactional emails
+
+DevOps & Deployment
+
+Hosting: Vercel for frontend, Railway for backend
+Database: Supabase PostgreSQL
+Monitoring: Sentry for error tracking
+Analytics: Mixpanel for user behaviour
+CI/CD: GitHub Actions for automated deployment
+
+
+🚀 Quick Start
+Prerequisites
+bashnode >= 18.0.0
+npm >= 8.0.0
+postgresql >= 14.0
+Installation
+
+Clone the repository
+
+bashgit clone https://github.com/Armin247/nutri-wise-duo.git
+cd nutri-wise-duo
+
+Install dependencies
+
+bash# Install frontend dependencies
+npm install
+
+# Install backend dependencies
+cd backend && npm install
+
+Set up environment variables
+
+bash# Copy environment template
+cp .env.example .env.local
+
+# Edit with your API keys
+nano .env.local
+
+Configure database
+
+bash# Set up PostgreSQL database
+createdb aliva
+
+# Run migrations
+npm run db:migrate
+
+# Seed initial data
+npm run db:seed
+
+Start development servers
+
+bash# Terminal 1: Start backend
+cd backend && npm run dev
+
+# Terminal 2: Start frontend  
 npm run dev
-```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/cdce25c6-a2bd-48fc-b028-992324a16dbe) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+🎉 Visit http://localhost:3000 to see Aliva in action!
