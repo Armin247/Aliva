@@ -8,7 +8,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, Utensils, MessageCircle, ChefHat, MapPin, MoreHorizontal, User, Settings } from "lucide-react";
+import { Menu, X, MessageCircle, ChefHat, MapPin, MoreHorizontal, User, Settings } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Navigation = () => {
@@ -51,11 +51,19 @@ const Navigation = () => {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div 
-            className="flex items-center space-x-2 cursor-pointer group"
+            className="flex items-center space-x-3 cursor-pointer group"
             onClick={() => scrollToSection('home')}
           >
-            <div className="w-8 h-8 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
-              <Utensils className="w-5 h-5 text-white" />
+            <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
+              <img 
+                src="/logo.svg" 
+                alt="Aliva Logo" 
+                className="h-8 w-auto"
+                onError={(e) => {
+                  // Fallback in case logo.svg is not found
+                  console.warn("Logo image not found, check if /logo.svg exists in public folder");
+                }}
+              />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
               Aliva
