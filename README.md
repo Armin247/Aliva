@@ -1,5 +1,5 @@
-🥗 Aliva
 <div align="center">
+🥗 Aliva
 Your AI-Powered Personal Nutritionist
 Professional nutrition guidance meets cutting-edge AI technology
 </div>
