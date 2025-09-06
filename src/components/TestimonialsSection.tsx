@@ -32,7 +32,7 @@ const TestimonialsSection = () => {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
             Loved by Thousands of
-            <span className="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent">
               Health-Conscious People
             </span>
           </h2>
@@ -46,7 +46,7 @@ const TestimonialsSection = () => {
             <Card key={index} className="relative overflow-hidden group hover:shadow-2xl transition-all duration-500 border-0 bg-white/50 backdrop-blur-sm card-hover">
               <div className="p-8">
                 <div className="flex items-center mb-6">
-                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center text-white font-bold mr-4">
+                  <div className="w-12 h-12 bg-gradient-to-br from-primary to-primary rounded-full flex items-center justify-center text-white font-bold mr-4">
                     {testimonial.avatar}
                   </div>
                   <div>
@@ -58,7 +58,7 @@ const TestimonialsSection = () => {
 
                 <div className="flex mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
-                    <Star key={i} className="w-5 h-5 text-accent fill-current" />
+                    <Star key={i} className="w-5 h-5 text-primary fill-current" />
                   ))}
                 </div>
 
@@ -67,7 +67,7 @@ const TestimonialsSection = () => {
                 </p>
               </div>
               
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-secondary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </Card>
           ))}
         </div>
@@ -76,7 +76,7 @@ const TestimonialsSection = () => {
           <div className="inline-flex items-center space-x-2 text-muted-foreground mb-8">
             <div className="flex">
               {[...Array(5)].map((_, i) => (
-                <Star key={i} className="w-5 h-5 text-accent fill-current" />
+                <Star key={i} className="w-5 h-5 text-primary fill-current" />
               ))}
             </div>
             <span className="text-lg font-semibold">4.9/5 from 50,000+ users</span>
