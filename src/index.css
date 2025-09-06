@@ -193,4 +193,20 @@ All colors MUST be HSL for perfect theme integration.
   .float-animation {
     animation: float 3s ease-in-out infinite;
   }
+
+  /* Soft grid background used on hero */
+  .grid-overlay {
+    background-image:
+      linear-gradient(to right, rgba(255,255,255,0.28) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(255,255,255,0.24) 1px, transparent 1px);
+    background-size: 64px 64px;
+    background-position: center;
+  }
+
+  /* simple vertical slide animation for quotes */
+  @keyframes quotes-ticker {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-100%); }
+    100% { transform: translateY(-200%); }
+  }
 }

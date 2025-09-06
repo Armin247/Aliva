@@ -1,11 +1,9 @@
 import Navigation from "@/components/Navigation";
 import HeroSection from "@/components/HeroSection";
-import FeaturesSection from "@/components/FeaturesSection";
-import ConsultationSection from "@/components/ConsultationSection";
-import RestaurantSection from "@/components/RestaurantSection";
-import RecipeSection from "@/components/RecipeSection";
-import TestimonialsSection from "@/components/TestimonialsSection";
-import CTASection from "@/components/CTASection";
+import ChatPreviewSection from "@/components/ChatPreviewSection";
+import StatsSection from "@/components/StatsSection";
+import TestimonialBanner from "@/components/TestimonialBanner";
+import BenefitsSection from "@/components/BenefitsSection";
 import FooterSection from "@/components/FooterSection";
 
 const Index = () => {
@@ -13,12 +11,10 @@ const Index = () => {
     <div className="min-h-screen">
       <Navigation />
       <HeroSection />
-      <FeaturesSection />
-      <ConsultationSection />
-      <RestaurantSection />
-      <RecipeSection />
-      <TestimonialsSection />
-      <CTASection />
+      <ChatPreviewSection />
+      <BenefitsSection />
+      <StatsSection />
+      <TestimonialBanner />
       <FooterSection />
     </div>
   );

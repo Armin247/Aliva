@@ -6,7 +6,7 @@ const features = [
   {
     icon: MessageCircle,
     title: "AI Nutrition Consultation",
-    description: "Get personalized dietary advice from our advanced AI powered by Gemini and ChatGPT. Ask questions, get meal plans, and receive expert guidance 24/7.",
+    description: "Get personalized dietary advice, meal plans and quick answers—24/7.",
     color: "from-primary to-primary-glow",
     delay: "0s"
   },
@@ -20,29 +20,29 @@ const features = [
   {
     icon: ChefHat,
     title: "Personalized Recipes",
-    description: "Generate custom recipes based on your preferences, dietary restrictions, and available ingredients. Complete with step-by-step instructions.",
-    color: "from-accent to-accent-glow",
+    description: "Generate custom recipes based on your preferences, dietary restrictions and pantry.",
+    color: "from-primary to-primary-glow",
     delay: "0.4s"
   },
   {
     icon: BarChart3,
     title: "Progress Tracking",
-    description: "Monitor your nutrition goals with beautiful charts and insights. Track calories, macros, and see your health journey unfold over time.",
-    color: "from-lavender to-lavender-glow",
+    description: "Track calories and macros with clear, simple insights.",
+    color: "from-primary to-primary-glow",
     delay: "0.6s"
   },
   {
     icon: Sparkles,
     title: "Meal Planning",
-    description: "AI-generated weekly meal plans tailored to your lifestyle. Save time, reduce stress, and maintain consistent healthy eating habits.",
-    color: "from-primary to-secondary",
+    description: "AI-generated weekly plans tailored to your lifestyle.",
+    color: "from-primary to-primary-glow",
     delay: "0.8s"
   },
   {
     icon: Shield,
     title: "Expert-Backed Advice",
-    description: "All recommendations are based on the latest nutritional science and guidelines from registered dietitians. Trustworthy advice you can rely on.",
-    color: "from-accent to-lavender",
+    description: "Recommendations aligned with current nutritional science.",
+    color: "from-primary to-primary-glow",
     delay: "1s"
   }
 ];

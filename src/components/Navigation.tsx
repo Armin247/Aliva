@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +18,76 @@ const Navigation = () => {
   const { toast } = useToast();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+
+  // Quotes data (text + gradient)
+  const quotes = [
+    { t: "Eat well, live well.", g: "from-primary to-primary-dark" },
+    { t: "Small choices, big changes.", g: "from-secondary to-primary" },
+    { t: "Food is fuel. Choose quality.", g: "from-accent to-primary" },
+    { t: "Healthy today, stronger tomorrow.", g: "from-lavender to-primary" },
+    { t: "Good food, good mood.", g: "from-primary to-secondary" },
+    { t: "Eat simple, feel amazing.", g: "from-primary-dark to-primary" },
+    { t: "Healthy plate, happy life.", g: "from-secondary to-primary" },
+    { t: "Choose greens, gain energy.", g: "from-accent to-primary" },
+    { t: "Nourish to flourish.", g: "from-lavender to-primary" },
+    { t: "Better bites, better days.", g: "from-primary to-primary-dark" },
+    { t: "Whole foods, whole you.", g: "from-secondary to-primary" },
+    { t: "Eat natural, feel powerful.", g: "from-accent to-primary" },
+  ];
+
+  // Quote index controlled by page scroll direction
+  const [quoteIdx, setQuoteIdx] = useState(0);
+  const [lineH, setLineH] = useState(40); // default h-10
+  const lineRef = useRef<HTMLDivElement | null>(null);
+  const lastScrollRef = useRef<number>(0);
+  const touchStartYRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (lineRef.current) {
+      const rect = lineRef.current.getBoundingClientRect();
+      setLineH(rect.height || 40);
+    }
+  }, []);
+
+  useEffect(() => {
+    const onWheel = (e: WheelEvent) => {
+      const now = Date.now();
+      if (now - lastScrollRef.current < 350) return; // throttle ~0.35s
+      lastScrollRef.current = now;
+      setQuoteIdx((prev) => {
+        const dir = e.deltaY > 0 ? 1 : -1;
+        const next = (prev + dir + quotes.length) % quotes.length;
+        return next;
+      });
+    };
+
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartYRef.current = e.touches[0].clientY;
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      const startY = touchStartYRef.current;
+      if (startY == null) return;
+      const dy = e.changedTouches[0].clientY - startY;
+      if (Math.abs(dy) < 24) return; // small swipe ignored
+      const now = Date.now();
+      if (now - lastScrollRef.current < 350) return;
+      lastScrollRef.current = now;
+      setQuoteIdx((prev) => {
+        const dir = dy < 0 ? 1 : -1; // swipe up -> next
+        const next = (prev + dir + quotes.length) % quotes.length;
+        return next;
+      });
+    };
+
+    window.addEventListener('wheel', onWheel, { passive: true });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+    return () => {
+      window.removeEventListener('wheel', onWheel as any);
+      window.removeEventListener('touchstart', onTouchStart as any);
+      window.removeEventListener('touchend', onTouchEnd as any);
+    };
+  }, [quotes.length]);
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -49,15 +119,15 @@ const Navigation = () => {
 
   const handleFeatureClick = (feature: string) => {
     toast({
-      title: `${feature} Feature`,
-      description: `${feature} functionality is being developed. Stay tuned for updates!`,
+      title: `${feature}`,
+      description: `Section coming soon`,
     });
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-lg border-b border-white/20 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className="fixed top-6 left-0 right-0 z-50">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="h-16 rounded-full bg-white shadow-xl border border-black/5 flex items-center px-4 sm:px-6 overflow-hidden">
           {/* Logo */}
           <div 
             className="flex items-center space-x-3 cursor-pointer group"
@@ -67,7 +137,7 @@ const Navigation = () => {
               <img 
                 src="/logo.svg" 
                 alt="Aliva Logo" 
-                className="h-8 w-auto"
+                className="h-10 w-auto shrink-0"
                 onError={(e) => {
                   // Fallback in case logo.svg is not found
                   console.warn("Logo image not found, check if /logo.svg exists in public folder");
@@ -76,62 +146,28 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* Desktop Navigation - Streamlined */}
-          <div className="hidden md:flex items-center space-x-6">
-            <Button 
-              variant="ghost" 
-              onClick={() => scrollToSection('home')}
-              className="hover:text-primary hover:bg-primary/10"
-            >
-              Home
-            </Button>
-            
-            <Button 
-              variant="ghost" 
-              onClick={() => scrollToSection('consultation')}
-              className="hover:text-primary hover:bg-primary/10"
-            >
-              <MessageCircle className="w-4 h-4 mr-2" />
-              AI Chat
-            </Button>
-
-            {/* Explore Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="hover:text-primary hover:bg-primary/10">
-                  <MoreHorizontal className="w-4 h-4 mr-2" />
-                  Explore
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>Features</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => scrollToSection('restaurants')}>
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Restaurant Finder
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection('recipes')}>
-                  <ChefHat className="w-4 h-4 mr-2" />
-                  Recipe Library
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuLabel>Learn More</DropdownMenuLabel>
-                <DropdownMenuItem onClick={() => handleFeatureClick('Meal Planning')}>
-                  <Settings className="w-4 h-4 mr-2" />
-                  Meal Planning
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => scrollToSection('about')}>
-                  About Aliva
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+          {/* Animated quotes instead of navlinks */}
+          <div className="hidden md:flex flex-1 min-w-0 justify-center text-lg md:text-2xl font-semibold">
+            <div ref={lineRef} className="overflow-hidden h-10 md:h-12 relative w-full max-w-[1000px] text-center min-w-0">
+              <div
+                className="absolute left-0 right-0 top-0"
+                style={{ transform: `translateY(-${quoteIdx * lineH}px)`, transition: 'transform 320ms ease' }}
+              >
+                {quotes.map((q, i) => (
+                  <div key={i} className={`h-10 md:h-12 flex items-center justify-center bg-gradient-to-r ${q.g} bg-clip-text text-transparent`}>
+                    {`“${q.t}”`}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="hidden md:flex items-center space-x-3">
+          {/* Profile button (replaces Get Started) */}
+          <div className="hidden md:flex items-center space-x-3 shrink-0">
             {user ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="rounded-full">
                     <User className="w-4 h-4 mr-2" />
                     {user.user_metadata?.full_name || user.email}
                   </Button>
@@ -150,14 +186,11 @@ const Navigation = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button variant="ghost" size="sm" onClick={handleAuthAction}>
+              <Button size="sm" onClick={() => navigate('/auth')} className="rounded-full">
                 <User className="w-4 h-4 mr-2" />
                 Sign In
               </Button>
             )}
-            <Button variant="hero" size="sm" onClick={handleGetStarted}>
-              Get Started
-            </Button>
           </div>
 
           {/* Mobile Menu Button */}
