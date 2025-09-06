@@ -138,7 +138,7 @@ const Navigation = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
-                  <DropdownMenuItem onClick={() => handleFeatureClick('Profile')}>
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <Settings className="w-4 h-4 mr-2" />
                     Profile Settings
                   </DropdownMenuItem>
