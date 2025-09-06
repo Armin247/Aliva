@@ -50,7 +50,7 @@ const RestaurantSection = () => {
         <div className="text-center mb-16">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6">
             Discover Healthy
-            <span className="block bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-primary to-primary bg-clip-text text-transparent">
               Restaurant Options
             </span>
           </h2>
@@ -95,7 +95,7 @@ const RestaurantSection = () => {
                 
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-1">
-                    <Star className="w-4 h-4 text-accent fill-current" />
+                    <Star className="w-4 h-4 text-primary fill-current" />
                     <span className="text-sm font-medium">{restaurant.rating}</span>
                   </div>
                   
