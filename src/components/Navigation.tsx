@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -8,12 +9,15 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, MessageCircle, ChefHat, MapPin, MoreHorizontal, User, Settings } from "lucide-react";
+import { Menu, X, MessageCircle, ChefHat, MapPin, MoreHorizontal, User, Settings, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { toast } = useToast();
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const scrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
@@ -31,11 +35,16 @@ const Navigation = () => {
     scrollToSection('consultation');
   };
 
-  const handleSignIn = () => {
-    toast({
-      title: "Sign In Coming Soon",
-      description: "User authentication will be available shortly. Thanks for your interest!",
-    });
+  const handleAuthAction = () => {
+    if (user) {
+      signOut();
+      toast({
+        title: "Signed out successfully",
+        description: "See you next time!",
+      });
+    } else {
+      navigate('/auth');
+    }
   };
 
   const handleFeatureClick = (feature: string) => {
@@ -119,10 +128,33 @@ const Navigation = () => {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-3">
-            <Button variant="ghost" size="sm" onClick={handleSignIn}>
-              <User className="w-4 h-4 mr-2" />
-              Sign In
-            </Button>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm">
+                    <User className="w-4 h-4 mr-2" />
+                    {user.user_metadata?.full_name || user.email}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleFeatureClick('Profile')}>
+                    <Settings className="w-4 h-4 mr-2" />
+                    Profile Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleAuthAction}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button variant="ghost" size="sm" onClick={handleAuthAction}>
+                <User className="w-4 h-4 mr-2" />
+                Sign In
+              </Button>
+            )}
             <Button variant="hero" size="sm" onClick={handleGetStarted}>
               Get Started
             </Button>
@@ -181,10 +213,17 @@ const Navigation = () => {
               </Button>
               
               <div className="border-t border-border/50 pt-4 mt-4 flex flex-col space-y-2">
-                <Button variant="ghost" size="sm" onClick={handleSignIn}>
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
-                </Button>
+                {user ? (
+                  <Button variant="ghost" size="sm" onClick={handleAuthAction}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                ) : (
+                  <Button variant="ghost" size="sm" onClick={handleAuthAction}>
+                    <User className="w-4 h-4 mr-2" />
+                    Sign In
+                  </Button>
+                )}
                 <Button variant="hero" size="sm" onClick={handleGetStarted}>
                   Get Started Free
                 </Button>
