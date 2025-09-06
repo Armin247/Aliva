@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Apple, Salad } from 'lucide-react';
+import LoginChat from '@/components/LoginChat';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -73,7 +74,7 @@ const Auth = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Salad className="h-8 w-8 text-primary" />
@@ -84,6 +85,7 @@ const Auth = () => {
           <p className="text-muted-foreground">Your AI-powered nutrition companion</p>
         </div>
 
+        <div className="w-full max-w-md mx-auto">
           <Card className="bg-white border border-primary/10 shadow-xl">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Welcome</CardTitle>
