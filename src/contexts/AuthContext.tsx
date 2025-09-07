@@ -13,7 +13,7 @@ interface AuthContextType {
   user: User | null;
   signUp: (email: string, password: string, fullName: string) => Promise<{ user: User | null; error: any }>;
   signIn: (email: string, password: string) => Promise<{ user: User | null; error: any }>;
-  logout: () => Promise<void>;
+  signOut: () => Promise<void>; // ✅ Change from "logout" to "signOut"
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -75,7 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     user,
     signUp,
     signIn,
-    logout
+    signOut: logout
   };
 
   return (
