@@ -51,6 +51,25 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!fullName.trim()) {
+      toast({
+        title: 'Full name required',
+        description: 'Please enter your full name to create an account.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast({
+        title: 'Password too short',
+        description: 'Password must be at least 6 characters long.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     const { error } = await signUp(email, password, fullName);
@@ -58,15 +77,18 @@ const Auth = () => {
     if (error) {
       toast({
         title: 'Sign up failed',
-        description: error.message,
+        description: error.message || 'Failed to create account. Please try again.',
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Account created!',
-        description: 'Please check your email to verify your account.',
+        title: 'Welcome to Aliva!',
+        description: 'Your account has been created successfully.',
       });
-      navigate('/dashboard');
+      // Small delay to show the success message
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
     }
 
     setIsLoading(false);
