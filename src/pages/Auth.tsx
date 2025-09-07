@@ -73,10 +73,10 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-white flex items-center justify-center p-4">
-      <div className="grid w-full max-w-6xl grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-white flex items-center justify-center p-3 sm:p-4">
+      <div className="grid w-full max-w-6xl grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-10">
         {/* Left: Auth Card */}
-        <div className="w-full max-w-md mx-auto">
+        <div className="w-full max-w-md mx-auto order-2 md:order-1">
           <div className="text-center mb-6">
             <div className="flex items-center justify-center gap-2 mb-2">
               <Salad className="h-8 w-8 text-primary" />
@@ -107,7 +107,7 @@ const Auth = () => {
                       <Label htmlFor="signin-password">Password</Label>
                       <Input id="signin-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
                     </div>
-                    <Button type="submit" className="w-full rounded-full h-12 bg-gradient-to-b from-primary-dark to-primary text-white" disabled={isLoading}>
+                    <Button type="submit" className="w-full rounded-full h-11 sm:h-12 bg-gradient-to-b from-primary-dark to-primary text-white" disabled={isLoading}>
                       {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</>) : ('Sign In')}
                     </Button>
                   </form>
@@ -127,7 +127,7 @@ const Auth = () => {
                       <Label htmlFor="signup-password">Password</Label>
                       <Input id="signup-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                     </div>
-                    <Button type="submit" className="w-full rounded-full h-12 bg-gradient-to-b from-primary-dark to-primary text-white" disabled={isLoading}>
+                    <Button type="submit" className="w-full rounded-full h-11 sm:h-12 bg-gradient-to-b from-primary-dark to-primary text-white" disabled={isLoading}>
                       {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account...</>) : ('Create Account')}
                     </Button>
                   </form>
@@ -140,8 +140,8 @@ const Auth = () => {
         </div>
 
         {/* Right: Chat */}
-        <div className="w-full max-w-xl mx-auto md:mt-4">
-          <div className="rounded-[28px] bg-white shadow-xl border border-black/5 p-4">
+        <div className="w-full max-w-xl mx-auto order-1 md:order-2 md:mt-4">
+          <div className="rounded-[20px] sm:rounded-[28px] bg-white shadow-xl border border-black/5 p-3 sm:p-4">
             <LoginChat />
           </div>
         </div>
