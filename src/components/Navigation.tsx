@@ -126,8 +126,8 @@ const Navigation = () => {
 
   return (
     <nav className="fixed top-6 left-0 right-0 z-50">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="h-16 rounded-full bg-white shadow-xl border border-black/5 flex items-center px-4 sm:px-6 overflow-hidden">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 relative">
+        <div className="h-14 sm:h-16 rounded-full bg-white shadow-xl border border-black/5 flex items-center justify-between px-3 sm:px-6 overflow-hidden">
           {/* Logo */}
           <div 
             className="flex items-center space-x-3 cursor-pointer group"
@@ -146,15 +146,15 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* Animated quotes instead of navlinks */}
-          <div className="hidden md:flex flex-1 min-w-0 justify-center text-lg md:text-2xl font-semibold">
-            <div ref={lineRef} className="overflow-hidden h-10 md:h-12 relative w-full max-w-[1000px] text-center min-w-0">
+          {/* Animated quotes (desktop only) */}
+          <div className="hidden md:flex flex-1 min-w-0 justify-center text-base sm:text-lg md:text-2xl font-semibold">
+            <div ref={lineRef} className="overflow-hidden h-8 sm:h-10 md:h-12 relative w-full max-w-[1000px] text-center min-w-0">
               <div
                 className="absolute left-0 right-0 top-0"
                 style={{ transform: `translateY(-${quoteIdx * lineH}px)`, transition: 'transform 320ms ease' }}
               >
                 {quotes.map((q, i) => (
-                  <div key={i} className={`h-10 md:h-12 flex items-center justify-center bg-gradient-to-r ${q.g} bg-clip-text text-transparent`}>
+                  <div key={i} className={`h-8 sm:h-10 md:h-12 flex items-center justify-center bg-gradient-to-r ${q.g} bg-clip-text text-transparent`}>
                     {`“${q.t}”`}
                   </div>
                 ))}
@@ -162,7 +162,7 @@ const Navigation = () => {
             </div>
           </div>
 
-          {/* Profile button (replaces Get Started) */}
+          {/* Profile button (desktop only) */}
           <div className="hidden md:flex items-center space-x-3 shrink-0">
             {user ? (
               <DropdownMenu>
@@ -193,10 +193,11 @@ const Navigation = () => {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
+          {/* Mobile menu icon on the far right */}
           <button
             className="md:hidden p-2 rounded-lg hover:bg-primary/10 transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
+            aria-label="Menu"
           >
             {isMenuOpen ? (
               <X className="w-6 h-6 text-primary" />
@@ -206,62 +207,18 @@ const Navigation = () => {
           </button>
         </div>
 
-        {/* Mobile Menu - Streamlined */}
+        {/* Mobile flyout with a single action button */}
         {isMenuOpen && (
-          <div className="md:hidden py-4 border-t border-border/50 bg-white/95 backdrop-blur-sm">
-            <div className="flex flex-col space-y-2">
-              <Button 
-                variant="ghost" 
-                className="justify-start px-4 py-3"
-                onClick={() => scrollToSection('home')}
-              >
-                Home
+          <div className="md:hidden absolute right-3 top-full mt-2 bg-white border border-black/5 rounded-xl shadow-xl p-2">
+            {user ? (
+              <Button size="sm" className="rounded-full" onClick={() => { setIsMenuOpen(false); navigate('/profile'); }}>
+                <User className="w-4 h-4 mr-2" /> Profile
               </Button>
-              
-              <Button 
-                variant="ghost" 
-                className="justify-start px-4 py-3"
-                onClick={() => scrollToSection('consultation')}
-              >
-                <MessageCircle className="w-4 h-4 mr-2" />
-                AI Consultation
+            ) : (
+              <Button size="sm" className="rounded-full" onClick={() => { setIsMenuOpen(false); navigate('/auth'); }}>
+                <User className="w-4 h-4 mr-2" /> Sign In
               </Button>
-              
-              <Button 
-                variant="ghost" 
-                className="justify-start px-4 py-3"
-                onClick={() => scrollToSection('restaurants')}
-              >
-                <MapPin className="w-4 h-4 mr-2" />
-                Find Restaurants
-              </Button>
-              
-              <Button 
-                variant="ghost" 
-                className="justify-start px-4 py-3"
-                onClick={() => scrollToSection('recipes')}
-              >
-                <ChefHat className="w-4 h-4 mr-2" />
-                Browse Recipes
-              </Button>
-              
-              <div className="border-t border-border/50 pt-4 mt-4 flex flex-col space-y-2">
-                {user ? (
-                  <Button variant="ghost" size="sm" onClick={handleAuthAction}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </Button>
-                ) : (
-                  <Button variant="ghost" size="sm" onClick={handleAuthAction}>
-                    <User className="w-4 h-4 mr-2" />
-                    Sign In
-                  </Button>
-                )}
-                <Button variant="hero" size="sm" onClick={handleGetStarted}>
-                  Get Started Free
-                </Button>
-              </div>
-            </div>
+            )}
           </div>
         )}
       </div>
