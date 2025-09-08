@@ -8,9 +8,11 @@ import {
   User
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { profileService } from '@/services/profileService';
 
 interface AuthContextType {
   user: User | null;
+  loading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ user: User | null; error: any }>;
   signIn: (email: string, password: string) => Promise<{ user: User | null; error: any }>;
   signOut: () => Promise<void>; // ✅ Change from "logout" to "signOut"
@@ -43,6 +45,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         displayName: fullName
       });
       
+      // Create user profile in Firestore
+      await profileService.createProfile(result.user.uid, {
+        fullName,
+        userId: result.user.uid
+      });
+      
       return { user: result.user, error: null };
     } catch (error) {
       return { user: null, error };
@@ -73,6 +81,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const value: AuthContextType = {
     user,
+    loading,
     signUp,
     signIn,
     signOut: logout
@@ -80,7 +89,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   return (
     <AuthContext.Provider value={value}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
