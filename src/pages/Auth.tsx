@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Salad } from 'lucide-react';
+import { Loader2, Apple, Salad } from 'lucide-react';
 import LoginChat from '@/components/LoginChat';
 
 const Auth = () => {
@@ -51,6 +51,25 @@ const Auth = () => {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!fullName.trim()) {
+      toast({
+        title: 'Full name required',
+        description: 'Please enter your full name to create an account.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (password.length < 6) {
+      toast({
+        title: 'Password too short',
+        description: 'Password must be at least 6 characters long.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     const { error } = await signUp(email, password, fullName);
@@ -58,15 +77,18 @@ const Auth = () => {
     if (error) {
       toast({
         title: 'Sign up failed',
-        description: error.message,
+        description: error.message || 'Failed to create account. Please try again.',
         variant: 'destructive',
       });
     } else {
       toast({
-        title: 'Account created!',
-        description: 'Please check your email to verify your account.',
+        title: 'Welcome to Aliva!',
+        description: 'Your account has been created successfully.',
       });
-      navigate('/dashboard');
+      // Small delay to show the success message
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1000);
     }
 
     setIsLoading(false);
@@ -83,8 +105,19 @@ const Auth = () => {
               <span className="text-2xl font-bold text-primary">Aliva</span>
             </div>
             <p className="text-muted-foreground">Your AI-powered nutrition companion</p>
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+      <div className="w-full max-w-4xl">
+        <div className="text-center mb-8">
+          <div className="flex items-center justify-center gap-2 mb-4">
+            <Salad className="h-8 w-8 text-primary" />
+            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              Aliva
+            </span>
           </div>
+          <p className="text-muted-foreground">Your AI-powered nutrition companion</p>
+        </div>
 
+        <div className="w-full max-w-md mx-auto">
           <Card className="bg-white border border-primary/10 shadow-xl">
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Welcome</CardTitle>
