@@ -7,8 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Apple, Salad } from 'lucide-react';
-import LoginChat from '@/components/LoginChat';
+import { Loader2, Salad } from 'lucide-react';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -95,7 +94,7 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-b from-primary/10 to-white flex items-center justify-center p-3 sm:p-4">
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
@@ -162,12 +161,7 @@ const Auth = () => {
           <p className="text-center text-sm text-muted-foreground mt-6">By continuing, you agree to our Terms of Service and Privacy Policy</p>
         </div>
 
-        {/* Right: Chat */}
-        <div className="w-full max-w-xl mx-auto md:mt-4">
-          <div className="rounded-[28px] bg-white shadow-xl border border-black/5 p-4">
-            <LoginChat />
-          </div>
-        </div>
+        {/* No right panel on auth page */}
       </div>
     </div>
   );

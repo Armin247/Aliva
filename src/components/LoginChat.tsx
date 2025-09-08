@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Bot, Send, Salad, Sparkles, User, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type ChatMessage = {
   role: "user" | "assistant" | "restaurants";
@@ -170,7 +171,7 @@ const LoginChat = () => {
 
   return (
     <>
-      <Card className="p-4 sm:p-5 bg-white border-0 shadow-xl">
+      <Card className="p-0 sm:p-5 md:p-5 bg-transparent md:bg-white border-0 shadow-none md:shadow-xl rounded-none md:rounded-xl">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
             <Salad className="h-4 w-4 text-white" />
@@ -179,9 +180,9 @@ const LoginChat = () => {
           <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary border-primary/20">Beta</Badge>
         </div>
 
-        <Separator className="mb-3" />
+        <Separator className="mb-3 hidden md:block" />
 
-        <div className="h-[340px] sm:h-[420px] rounded-lg border border-primary/10 bg-muted/10">
+        <div className="h-[calc(100vh-220px)] sm:h-[420px] rounded-none md:rounded-lg border-0 md:border border-primary/10 bg-muted/10">
           <ScrollArea className="h-full w-full">
             <div ref={listRef} className="p-3 sm:p-4 space-y-3">
               {messages.map((m, idx) => (
@@ -242,33 +243,67 @@ const LoginChat = () => {
         </div>
       </Card>
 
-      <Dialog open={!!openRestaurants} onOpenChange={(v) => !v && setOpenRestaurants(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Restaurants</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 max-h-[60vh] overflow-auto pr-2">
-            {openRestaurants?.map((r, i) => (
-              <div key={i} className="rounded-lg border flex overflow-hidden min-h-[116px]">
-                <div className="w-20 bg-primary/5 flex items-center justify-center rounded-l-lg text-3xl">
-                  {r.logo || "🍽️"}
-                </div>
-                <div className="flex-1 p-4 flex items-start justify-between gap-4">
-                  <div>
-                    <div className="font-semibold">{r.name}</div>
-                    <div className="text-sm text-muted-foreground">{r.dish} • {r.price} • {r.rating.toFixed(1)}★</div>
-                    <div className="text-xs text-muted-foreground mt-1">Healthy picks available • Suitable for dietary preferences</div>
+      {/* Desktop modal only */}
+      <div className="hidden md:block">
+        <Dialog open={!!openRestaurants} onOpenChange={(v) => !v && setOpenRestaurants(null)}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Restaurants</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-3 max-h-[60vh] overflow-auto pr-2">
+              {openRestaurants?.map((r, i) => (
+                <div key={i} className="rounded-lg border flex overflow-hidden min-h-[116px]">
+                  <div className="w-20 bg-primary/5 flex items-center justify-center rounded-l-lg text-3xl">
+                    {r.logo || "🍽️"}
                   </div>
-                  <div className="text-right text-sm text-muted-foreground">
-                    <div>{r.eta}</div>
-                    <div>{r.distanceKm.toFixed(1)} km</div>
+                  <div className="flex-1 p-4 flex items-start justify-between gap-4">
+                    <div>
+                      <div className="font-semibold">{r.name}</div>
+                      <div className="text-sm text-muted-foreground">{r.dish} • {r.price} • {r.rating.toFixed(1)}★</div>
+                      <div className="text-xs text-muted-foreground mt-1">Healthy picks available • Suitable for dietary preferences</div>
+                    </div>
+                    <div className="text-right text-sm text-muted-foreground">
+                      <div>{r.eta}</div>
+                      <div>{r.distanceKm.toFixed(1)} km</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      {/* Mobile bottom sheet */}
+      <div className="md:hidden">
+        <Sheet open={!!openRestaurants} onOpenChange={(v) => !v && setOpenRestaurants(null)}>
+          <SheetContent side="bottom" className="rounded-t-2xl p-4 h-[80vh]">
+            <SheetHeader>
+              <SheetTitle>Restaurants</SheetTitle>
+            </SheetHeader>
+            <div className="space-y-3 max-h-[68vh] overflow-auto pt-2">
+              {openRestaurants?.map((r, i) => (
+                <div key={i} className="rounded-lg border flex overflow-hidden min-h-[116px]">
+                  <div className="w-16 bg-primary/5 flex items-center justify-center rounded-l-lg text-2xl">
+                    {r.logo || "🍽️"}
+                  </div>
+                  <div className="flex-1 p-3 flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold">{r.name}</div>
+                      <div className="text-xs text-muted-foreground">{r.dish} • {r.price} • {r.rating.toFixed(1)}★</div>
+                      <div className="text-xs text-muted-foreground mt-1">Healthy picks available</div>
+                    </div>
+                    <div className="text-right text-xs text-muted-foreground">
+                      <div>{r.eta}</div>
+                      <div>{r.distanceKm.toFixed(1)} km</div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
     </>
   );
 };
