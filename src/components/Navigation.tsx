@@ -19,6 +19,24 @@ const Navigation = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
+  // Helper function to get user initials
+  const getUserInitials = (name: string | null, email: string | null): string => {
+    if (name && name.trim()) {
+      return name
+        .trim()
+        .split(' ')
+        .map(part => part.charAt(0).toUpperCase())
+        .slice(0, 2)
+        .join('');
+    }
+    if (email && email.trim()) {
+      return email.charAt(0).toUpperCase();
+    }
+    return 'U'; // fallback to 'U' for User
+  };
+
+  const userInitials = getUserInitials(user?.displayName, user?.email);
+
   // Quotes data (text + gradient)
   const quotes = [
     { t: "Eat well, live well.", g: "from-primary to-primary-dark" },
@@ -155,7 +173,7 @@ const Navigation = () => {
               >
                 {quotes.map((q, i) => (
                   <div key={i} className={`h-8 sm:h-10 md:h-12 flex items-center justify-center bg-gradient-to-r ${q.g} bg-clip-text text-transparent`}>
-                    {`“${q.t}”`}
+                    {`"${q.t}"`}
                   </div>
                 ))}
               </div>
@@ -168,11 +186,9 @@ const Navigation = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="rounded-full">
-                    {user.photoURL ? (
-                      <img src={user.photoURL} alt="avatar" className="w-8 h-8 rounded-full mr-2 object-cover" />
-                    ) : (
-                      <User className="w-5 h-5 mr-2" />
-                    )}
+                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold mr-2">
+                      {userInitials}
+                    </div>
                     {user.displayName || user.email}
                   </Button>
                 </DropdownMenuTrigger>
@@ -215,9 +231,14 @@ const Navigation = () => {
         {isMenuOpen && (
           <div className="md:hidden absolute right-3 top-full mt-2 bg-white border border-black/5 rounded-xl shadow-xl p-2">
             {user ? (
-              <Button size="sm" className="rounded-full" onClick={() => { setIsMenuOpen(false); navigate('/profile'); }}>
-                <User className="w-4 h-4 mr-2" /> Profile
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+                  {userInitials}
+                </div>
+                <Button size="sm" className="rounded-full" onClick={() => { setIsMenuOpen(false); navigate('/profile'); }}>
+                  Profile
+                </Button>
+              </div>
             ) : (
               <Button size="sm" className="rounded-full" onClick={() => { setIsMenuOpen(false); navigate('/auth'); }}>
                 <User className="w-4 h-4 mr-2" /> Sign In

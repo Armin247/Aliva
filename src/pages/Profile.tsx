@@ -10,9 +10,14 @@ import { useToast } from '@/components/ui/use-toast';
 import { profileService } from '@/services/profileService';
 import { ACTIVITY_LEVELS, UserProfile } from '@/types/profile';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { getDownloadURL, ref, uploadBytes } from 'firebase/storage';
-import { storage } from '@/lib/firebase';
-import { updateProfile as updateAuthProfile } from 'firebase/auth';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   ChartContainer,
   ChartTooltip,
@@ -20,9 +25,10 @@ import {
 } from '@/components/ui/chart';
 import { Line, LineChart, XAxis, YAxis } from 'recharts';
 import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, LogOut } from 'lucide-react';
 
 const Profile: React.FC = () => {
-  const { user, loading, refreshUser } = useAuth();
+  const { user, loading, signOut } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -34,38 +40,6 @@ const Profile: React.FC = () => {
   const [newWeightDate, setNewWeightDate] = useState<string>(() => new Date().toISOString().slice(0,10));
   const weightSaveTimerRef = useRef<number | null>(null);
   const [calorieGoal, setCalorieGoal] = useState<'loss' | 'maintain' | 'gain'>('maintain');
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
-
-  const MAX_AVATAR_BYTES = 2 * 1024 * 1024; // 2MB
-  const TARGET_AVATAR_PX = 512; // 512x512
-
-  const cropAndResizeToSquare = (file: File, targetSize = TARGET_AVATAR_PX, mime = 'image/jpeg', quality = 0.85): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onerror = () => reject(new Error('Failed to read image'));
-      reader.onload = () => {
-        const img = new Image();
-        img.onerror = () => reject(new Error('Invalid image'));
-        img.onload = () => {
-          const side = Math.min(img.width, img.height);
-          const sx = (img.width - side) / 2;
-          const sy = (img.height - side) / 2;
-          const canvas = document.createElement('canvas');
-          canvas.width = targetSize;
-          canvas.height = targetSize;
-          const ctx = canvas.getContext('2d');
-          if (!ctx) return reject(new Error('Canvas not supported'));
-          ctx.drawImage(img, sx, sy, side, side, 0, 0, targetSize, targetSize);
-          canvas.toBlob((blob) => {
-            if (!blob) return reject(new Error('Failed to process image'));
-            resolve(blob);
-          }, mime, quality);
-        };
-        img.src = String(reader.result);
-      };
-      reader.readAsDataURL(file);
-    });
-  };
 
   const defaults = useMemo<UserProfile>(() => ({
     userId: user?.uid || '',
@@ -85,13 +59,23 @@ const Profile: React.FC = () => {
     weightHistory: [],
   }), [user]);
 
-  useEffect(() => {
-    return () => {
-      if (avatarPreview) {
-        URL.revokeObjectURL(avatarPreview);
-      }
-    };
-  }, [avatarPreview]);
+  // Helper function to get user initials
+  const getUserInitials = (name: string | null, email: string | null): string => {
+    if (name && name.trim()) {
+      return name
+        .trim()
+        .split(' ')
+        .map(part => part.charAt(0).toUpperCase())
+        .slice(0, 2)
+        .join('');
+    }
+    if (email && email.trim()) {
+      return email.charAt(0).toUpperCase();
+    }
+    return 'U'; // fallback to 'U' for User
+  };
+
+  const userInitials = getUserInitials(profile?.fullName || user?.displayName, user?.email);
 
   useEffect(() => {
     if (!user || loading) return;
@@ -231,336 +215,317 @@ const Profile: React.FC = () => {
     }, 700);
   };
 
-  
+  const handleSignOut = () => {
+    signOut();
+    toast({
+      title: "Signed out successfully",
+      description: "See you next time!",
+    });
+    navigate('/');
+  };
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Profile</h1>
-        <Button variant="outline" onClick={() => navigate('/dashboard')}>Back to dashboard</Button>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <Card className="p-6">
-            <div className="flex items-center gap-4">
-              <img
-                src={avatarPreview || user.photoURL || profile.photoURL || '/placeholder.svg'}
-                alt="Profile avatar"
-                className="h-16 w-16 rounded-full object-cover border"
-              />
-              <div className="space-y-2">
-                <div className="font-medium">Profile picture</div>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file || !user) return;
-                    try {
-                      if (!file.type.startsWith('image/')) {
-                        toast({ title: 'Please select an image file' });
-                        return;
-                      }
-                      if (file.size > MAX_AVATAR_BYTES) {
-                        toast({ title: 'Image too large', description: 'Max size is 2MB.' });
-                        return;
-                      }
-                      const processed = await cropAndResizeToSquare(file);
-                      const localUrl = URL.createObjectURL(processed);
-                      setAvatarPreview(prev => {
-                        if (prev) URL.revokeObjectURL(prev);
-                        return localUrl;
-                      });
-                      const fileRef = ref(storage, `avatars/${user.uid}/${Date.now()}.jpg`);
-                      await uploadBytes(fileRef, processed, { contentType: 'image/jpeg' });
-                      const url = await getDownloadURL(fileRef);
-                      updateField('photoURL', url);
-                      // swap preview to remote URL once available
-                      setAvatarPreview(prev => {
-                        if (prev) URL.revokeObjectURL(prev);
-                        return null;
-                      });
-                      // Try updating auth profile first
-                      try {
-                        await updateAuthProfile(user, { photoURL: url });
-                        await refreshUser();
-                      } catch (err) {
-                        console.warn('Auth photo update failed', err);
-                      }
-                      // Save to Firestore profile (upsert to handle first-time users)
-                      try {
-                        await profileService.upsertProfile(user.uid, { photoURL: url });
-                        toast({ title: 'Profile photo updated' });
-                      } catch (err: any) {
-                        console.warn('Firestore photo save failed', err);
-                        const msg = err?.message || 'Insufficient permissions or network error';
-                        toast({ title: 'Photo updated, but save failed', description: msg });
-                      }
-                    } catch (e: any) {
-                      const msg = e?.message || 'Please try again.';
-                      toast({ title: 'Upload failed', description: msg });
-                    }
-                  }}
-                />
-              </div>
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Bar */}
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-5xl mx-auto px-6">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center">
+              <h1 className="text-xl font-semibold">Profile Settings</h1>
             </div>
-          </Card>
-          <Card className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="fullName">Full name</Label>
-                <Input id="fullName" value={profile.fullName || ''} onChange={e => updateField('fullName', e.target.value)} />
-              </div>
-              <div>
-                <Label>Email</Label>
-                <Input value={user.email || ''} disabled />
-              </div>
-              <div>
-                <Label htmlFor="age">Age</Label>
-                <Input id="age" type="number" min={0} value={profile.age ?? ''} onChange={e => updateField('age', e.target.value ? Number(e.target.value) : undefined)} />
-              </div>
-              <div>
-                <Label>Gender</Label>
-                <Select value={profile.gender || ''} onValueChange={v => updateField('gender', v as any)}>
-                  <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="male">Male</SelectItem>
-                    <SelectItem value="female">Female</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="height">Height (cm)</Label>
-                <Input id="height" type="number" min={0} value={profile.heightCm ?? ''} onChange={e => updateField('heightCm', e.target.value ? Number(e.target.value) : undefined)} />
-              </div>
-              <div>
-                <Label htmlFor="currentWeight">Current weight (kg)</Label>
-                <Input id="currentWeight" type="number" min={0} value={profile.currentWeightKg ?? ''} onChange={e => updateField('currentWeightKg', e.target.value ? Number(e.target.value) : undefined)} />
-              </div>
-              <div>
-                <Label htmlFor="targetWeight">Target weight (kg)</Label>
-                <Input id="targetWeight" type="number" min={0} value={profile.targetWeightKg ?? ''} onChange={e => updateField('targetWeightKg', e.target.value ? Number(e.target.value) : undefined)} />
-              </div>
-              <div>
-                <Label>Activity level</Label>
-                <Select value={profile.activityLevel || ''} onValueChange={v => updateField('activityLevel', v)}>
-                  <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
-                  <SelectContent>
-                    {ACTIVITY_LEVELS.map(l => (
-                      <SelectItem key={l} value={l}>{l.replace('_', ' ')}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            
+            <div className="flex items-center space-x-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="rounded-full">
+                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold mr-2">
+                      {userInitials}
+                    </div>
+                    {user?.displayName || user?.email}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Back to Dashboard
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-          </Card>
-
-          <Card className="p-6 space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Dietary preferences (comma separated)</Label>
-                <Input value={(profile.dietaryPreferences || []).join(', ')} onChange={e => updateField('dietaryPreferences', parseCSV(e.target.value))} />
-              </div>
-              <div>
-                <Label>Health goals (comma separated)</Label>
-                <Input value={(profile.healthGoals || []).join(', ')} onChange={e => updateField('healthGoals', parseCSV(e.target.value))} />
-              </div>
-              <div>
-                <Label>Allergies (comma separated)</Label>
-                <Input value={(profile.allergies || []).join(', ')} onChange={e => updateField('allergies', parseCSV(e.target.value))} />
-              </div>
-              <div>
-                <Label>Medical conditions (comma separated)</Label>
-                <Input value={(profile.medicalConditions || []).join(', ')} onChange={e => updateField('medicalConditions', parseCSV(e.target.value))} />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>Smoking status</Label>
-                <Select value={profile.smokingStatus || ''} onValueChange={v => updateField('smokingStatus', v as any)}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="never">Never</SelectItem>
-                    <SelectItem value="former">Former</SelectItem>
-                    <SelectItem value="current">Current</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Alcohol frequency</Label>
-                <Select value={profile.alcoholFrequency || ''} onValueChange={v => updateField('alcoholFrequency', v as any)}>
-                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="never">Never</SelectItem>
-                    <SelectItem value="occasional">Occasional</SelectItem>
-                    <SelectItem value="regular">Regular</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div>
-              <Label>Notes</Label>
-              <Textarea placeholder="Additional info to personalize your diet plan" />
-            </div>
-          </Card>
-
-          <div className="flex gap-3">
-            <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save changes'}</Button>
           </div>
         </div>
+      </nav>
 
-        <div className="space-y-6">
-          <Card className="p-6">
-            <div className="mb-4 font-semibold">Calorie calculator</div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label>BMR (Basal Metabolic Rate)</Label>
-                <Input
-                  value={bmr ? String(bmr) : ''}
-                  disabled
-                />
-              </div>
-              <div>
-                <Label>TDEE (Total Daily Energy Expenditure)</Label>
-                <Input
-                  value={tdee ? String(tdee) : ''}
-                  disabled
-                />
-              </div>
-              <div>
-                <Label>Goal</Label>
-                <Select value={calorieGoal} onValueChange={(v) => setCalorieGoal(v as any)}>
-                  <SelectTrigger><SelectValue placeholder="Select goal" /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="loss">Lose weight</SelectItem>
-                    <SelectItem value="maintain">Maintain</SelectItem>
-                    <SelectItem value="gain">Gain muscle</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label>Suggested calories</Label>
-                <Input value={suggestedCalories ? String(suggestedCalories) : ''} disabled />
-              </div>
-              <div className="md:col-span-2 grid grid-cols-3 gap-4">
-                <div>
-                  <Label>Protein</Label>
-                  <Input value={`${macroBreakdown.proteinG} g`} disabled />
-                </div>
-                <div>
-                  <Label>Fat</Label>
-                  <Input value={`${macroBreakdown.fatG} g`} disabled />
-                </div>
-                <div>
-                  <Label>Carbs</Label>
-                  <Input value={`${macroBreakdown.carbG} g`} disabled />
-                </div>
-              </div>
-              <div>
-                <Label>Preferred daily calorie target</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={profile.preferredCalorieTarget ?? ''}
-                  onChange={e => updateField('preferredCalorieTarget', e.target.value ? Number(e.target.value) : undefined)}
-                />
-              </div>
-            </div>
-            <div className="mt-4">
-              <Button
-                variant="outline"
-                onClick={async () => {
-                  if (!user) return;
-                  try {
-                    await profileService.updateProfile(user.uid, { preferredCalorieTarget: profile.preferredCalorieTarget });
-                    toast({ title: 'Calorie target saved' });
-                  } catch (e) {
-                    toast({ title: 'Save failed', description: 'Please try again.' });
-                  }
-                }}
-              >
-                Save calorie target
-              </Button>
-              <Button
-                className="ml-2"
-                variant="default"
-                onClick={() => updateField('preferredCalorieTarget', suggestedCalories || undefined)}
-                disabled={!suggestedCalories}
-              >
-                Apply suggestion
-              </Button>
-            </div>
-          </Card>
+      {/* Main Content */}
+      <div className="max-w-5xl mx-auto p-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-2xl font-bold">Personal Information</h2>
+        </div>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="font-semibold">Weight journey</div>
-              <Button variant="outline" onClick={addWeightEntry}>Add entry</Button>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="fullName">Full name</Label>
+                  <Input id="fullName" value={profile.fullName || ''} onChange={e => updateField('fullName', e.target.value)} />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input value={user.email || ''} disabled />
+                </div>
+                <div>
+                  <Label htmlFor="age">Age</Label>
+                  <Input id="age" type="number" min={0} value={profile.age ?? ''} onChange={e => updateField('age', e.target.value ? Number(e.target.value) : undefined)} />
+                </div>
+                <div>
+                  <Label>Gender</Label>
+                  <Select value={profile.gender || ''} onValueChange={v => updateField('gender', v as any)}>
+                    <SelectTrigger><SelectValue placeholder="Select gender" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="height">Height (cm)</Label>
+                  <Input id="height" type="number" min={0} value={profile.heightCm ?? ''} onChange={e => updateField('heightCm', e.target.value ? Number(e.target.value) : undefined)} />
+                </div>
+                <div>
+                  <Label htmlFor="currentWeight">Current weight (kg)</Label>
+                  <Input id="currentWeight" type="number" min={0} value={profile.currentWeightKg ?? ''} onChange={e => updateField('currentWeightKg', e.target.value ? Number(e.target.value) : undefined)} />
+                </div>
+                <div>
+                  <Label htmlFor="targetWeight">Target weight (kg)</Label>
+                  <Input id="targetWeight" type="number" min={0} value={profile.targetWeightKg ?? ''} onChange={e => updateField('targetWeightKg', e.target.value ? Number(e.target.value) : undefined)} />
+                </div>
+                <div>
+                  <Label>Activity level</Label>
+                  <Select value={profile.activityLevel || ''} onValueChange={v => updateField('activityLevel', v)}>
+                    <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                    <SelectContent>
+                      {ACTIVITY_LEVELS.map(l => (
+                        <SelectItem key={l} value={l}>{l.replace('_', ' ')}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="p-6 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Dietary preferences (comma separated)</Label>
+                  <Input value={(profile.dietaryPreferences || []).join(', ')} onChange={e => updateField('dietaryPreferences', parseCSV(e.target.value))} />
+                </div>
+                <div>
+                  <Label>Health goals (comma separated)</Label>
+                  <Input value={(profile.healthGoals || []).join(', ')} onChange={e => updateField('healthGoals', parseCSV(e.target.value))} />
+                </div>
+                <div>
+                  <Label>Allergies (comma separated)</Label>
+                  <Input value={(profile.allergies || []).join(', ')} onChange={e => updateField('allergies', parseCSV(e.target.value))} />
+                </div>
+                <div>
+                  <Label>Medical conditions (comma separated)</Label>
+                  <Input value={(profile.medicalConditions || []).join(', ')} onChange={e => updateField('medicalConditions', parseCSV(e.target.value))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Smoking status</Label>
+                  <Select value={profile.smokingStatus || ''} onValueChange={v => updateField('smokingStatus', v as any)}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="never">Never</SelectItem>
+                      <SelectItem value="former">Former</SelectItem>
+                      <SelectItem value="current">Current</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Alcohol frequency</Label>
+                  <Select value={profile.alcoholFrequency || ''} onValueChange={v => updateField('alcoholFrequency', v as any)}>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="never">Never</SelectItem>
+                      <SelectItem value="occasional">Occasional</SelectItem>
+                      <SelectItem value="regular">Regular</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label>Notes</Label>
+                <Textarea placeholder="Additional info to personalize your diet plan" />
+              </div>
+            </Card>
+
+            <div className="flex gap-3">
+              <Button onClick={handleSave} disabled={saving}>{saving ? 'Saving...' : 'Save changes'}</Button>
             </div>
-            <div className="mb-4">
-              <ChartContainer
-                config={{ kg: { label: 'Weight (kg)', color: 'hsl(var(--primary))' } }}
-                className="w-full"
-              >
-                <LineChart data={weightData} margin={{ left: 12, right: 12 }}>
-                  <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
-                  <YAxis tickLine={false} axisLine={false} tickMargin={8} width={40} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Line type="monotone" dataKey="kg" stroke="var(--color-kg)" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ChartContainer>
-            </div>
-            <div className="space-y-2">
-              {(profile.weightHistory || []).length === 0 && (
-                <div className="text-sm text-gray-500">No entries yet.</div>
-              )}
-              {(profile.weightHistory || [])
-                .slice()
-                .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-                .map((w, idx) => (
-                  <div key={idx} className="flex items-center justify-between gap-3 text-sm border rounded-md p-2">
-                    <span className="text-gray-600">{new Date(w.date).toLocaleDateString()}</span>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="number"
-                        className="h-8 w-24"
-                        value={w.weightKg}
-                        onChange={e => {
-                          const val = Number(e.target.value);
-                          setProfile(prev => {
-                            if (!prev) return prev;
-                            const next = [...(prev.weightHistory || [])];
-                            next[idx] = { ...next[idx], weightKg: Number.isNaN(val) ? next[idx].weightKg : val };
-                            return { ...prev, weightHistory: next };
-                          });
-                        }}
-                        onBlur={() => {
-                          const nextHistory = (profile.weightHistory || []).slice();
-                          saveWeightHistoryDebounced(nextHistory);
-                        }}
-                      />
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => {
-                          setProfile(prev => {
-                            if (!prev) return prev;
-                            const next = (prev.weightHistory || []).filter((_, i) => i !== idx);
-                            return { ...prev, weightHistory: next };
-                          });
-                          const nextHistory = (profile.weightHistory || []).filter((_, i) => i !== idx);
-                          saveWeightHistoryDebounced(nextHistory as any);
-                        }}
-                      >
-                        Delete
-                      </Button>
-                    </div>
+          </div>
+
+          <div className="space-y-6">
+            <Card className="p-6">
+              <div className="mb-4 font-semibold">Calorie calculator</div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>BMR (Basal Metabolic Rate)</Label>
+                  <Input
+                    value={bmr ? String(bmr) : ''}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label>TDEE (Total Daily Energy Expenditure)</Label>
+                  <Input
+                    value={tdee ? String(tdee) : ''}
+                    disabled
+                  />
+                </div>
+                <div>
+                  <Label>Goal</Label>
+                  <Select value={calorieGoal} onValueChange={(v) => setCalorieGoal(v as any)}>
+                    <SelectTrigger><SelectValue placeholder="Select goal" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="loss">Lose weight</SelectItem>
+                      <SelectItem value="maintain">Maintain</SelectItem>
+                      <SelectItem value="gain">Gain muscle</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Suggested calories</Label>
+                  <Input value={suggestedCalories ? String(suggestedCalories) : ''} disabled />
+                </div>
+                <div className="md:col-span-2 grid grid-cols-3 gap-4">
+                  <div>
+                    <Label>Protein</Label>
+                    <Input value={`${macroBreakdown.proteinG} g`} disabled />
                   </div>
-                ))}
-            </div>
-          </Card>
+                  <div>
+                    <Label>Fat</Label>
+                    <Input value={`${macroBreakdown.fatG} g`} disabled />
+                  </div>
+                  <div>
+                    <Label>Carbs</Label>
+                    <Input value={`${macroBreakdown.carbG} g`} disabled />
+                  </div>
+                </div>
+                <div>
+                  <Label>Preferred daily calorie target</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={profile.preferredCalorieTarget ?? ''}
+                    onChange={e => updateField('preferredCalorieTarget', e.target.value ? Number(e.target.value) : undefined)}
+                  />
+                </div>
+              </div>
+              <div className="mt-4">
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    if (!user) return;
+                    try {
+                      await profileService.updateProfile(user.uid, { preferredCalorieTarget: profile.preferredCalorieTarget });
+                      toast({ title: 'Calorie target saved' });
+                    } catch (e) {
+                      toast({ title: 'Save failed', description: 'Please try again.' });
+                    }
+                  }}
+                >
+                  Save calorie target
+                </Button>
+                <Button
+                  className="ml-2"
+                  variant="default"
+                  onClick={() => updateField('preferredCalorieTarget', suggestedCalories || undefined)}
+                  disabled={!suggestedCalories}
+                >
+                  Apply suggestion
+                </Button>
+              </div>
+            </Card>
+
+            <Card className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="font-semibold">Weight journey</div>
+                <Button variant="outline" onClick={addWeightEntry}>Add entry</Button>
+              </div>
+              <div className="mb-4">
+                <ChartContainer
+                  config={{ kg: { label: 'Weight (kg)', color: 'hsl(var(--primary))' } }}
+                  className="w-full"
+                >
+                  <LineChart data={weightData} margin={{ left: 12, right: 12 }}>
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tickMargin={8} />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} width={40} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Line type="monotone" dataKey="kg" stroke="var(--color-kg)" strokeWidth={2} dot={false} />
+                  </LineChart>
+                </ChartContainer>
+              </div>
+              <div className="space-y-2">
+                {(profile.weightHistory || []).length === 0 && (
+                  <div className="text-sm text-gray-500">No entries yet.</div>
+                )}
+                {(profile.weightHistory || [])
+                  .slice()
+                  .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+                  .map((w, idx) => (
+                    <div key={idx} className="flex items-center justify-between gap-3 text-sm border rounded-md p-2">
+                      <span className="text-gray-600">{new Date(w.date).toLocaleDateString()}</span>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          className="h-8 w-24"
+                          value={w.weightKg}
+                          onChange={e => {
+                            const val = Number(e.target.value);
+                            setProfile(prev => {
+                              if (!prev) return prev;
+                              const next = [...(prev.weightHistory || [])];
+                              next[idx] = { ...next[idx], weightKg: Number.isNaN(val) ? next[idx].weightKg : val };
+                              return { ...prev, weightHistory: next };
+                            });
+                          }}
+                          onBlur={() => {
+                            const nextHistory = (profile.weightHistory || []).slice();
+                            saveWeightHistoryDebounced(nextHistory);
+                          }}
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            setProfile(prev => {
+                              if (!prev) return prev;
+                              const next = (prev.weightHistory || []).filter((_, i) => i !== idx);
+                              return { ...prev, weightHistory: next };
+                            });
+                            const nextHistory = (profile.weightHistory || []).filter((_, i) => i !== idx);
+                            saveWeightHistoryDebounced(nextHistory as any);
+                          }}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </Card>
+          </div>
         </div>
       </div>
     </div>
