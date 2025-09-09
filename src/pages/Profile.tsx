@@ -8,7 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/lib/firebase'; // You'll need to create this
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { Loader2, Plus, X, User, Target, Shield, Activity } from 'lucide-react';
 
 interface UserProfile {
@@ -55,15 +56,13 @@ const Profile = () => {
 
   const fetchProfile = async () => {
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user!.id)
-        .maybeSingle();
+      if (!user?.uid) return;
+      
+      const docRef = doc(db, 'profiles', user.uid);
+      const docSnap = await getDoc(docRef);
 
-      if (error) throw error;
-
-      if (data) {
+      if (docSnap.exists()) {
+        const data = docSnap.data() as UserProfile;
         setProfile(data);
       }
     } catch (error: any) {
@@ -78,23 +77,21 @@ const Profile = () => {
   };
 
   const saveProfile = async () => {
-    if (!user) return;
+    if (!user?.uid) return;
     
     setSaving(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .upsert({
-          user_id: user.id,
-          full_name: profile.full_name,
-          dietary_preferences: profile.dietary_preferences || [],
-          health_goals: profile.health_goals || [],
-          allergies: profile.allergies || [],
-          age: profile.age,
-          activity_level: profile.activity_level,
-        });
-
-      if (error) throw error;
+      const docRef = doc(db, 'profiles', user.uid);
+      await setDoc(docRef, {
+        id: user.uid,
+        full_name: profile.full_name || '',
+        dietary_preferences: profile.dietary_preferences || [],
+        health_goals: profile.health_goals || [],
+        allergies: profile.allergies || [],
+        age: profile.age,
+        activity_level: profile.activity_level || '',
+        updated_at: new Date(),
+      }, { merge: true });
 
       toast({
         title: 'Profile updated!',
