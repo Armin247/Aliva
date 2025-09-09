@@ -20,9 +20,6 @@ const HeroSection = () => {
           <Button variant="outline" size="sm" className="rounded-full px-4 bg-gradient-to-b from-primary-dark to-primary/95 text-white border-0 shadow-md">
             <MessageCircle className="w-5 h-5 mr-2" /> Get Started Now
           </Button>
-          <Button variant="outline" size="sm" className="rounded-full px-4 bg-white text-foreground border border-black/5 shadow-md">
-            Try Aliva Free
-          </Button>
         </div>
 
         {/* Stats */}
