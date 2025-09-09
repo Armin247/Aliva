@@ -168,8 +168,12 @@ const Navigation = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="rounded-full">
-                    <User className="w-4 h-4 mr-2" />
-                    {user.user_metadata?.full_name || user.email}
+                    {user.photoURL ? (
+                      <img src={user.photoURL} alt="avatar" className="w-6 h-6 rounded-full mr-2 object-cover" />
+                    ) : (
+                      <User className="w-4 h-4 mr-2" />
+                    )}
+                    {user.displayName || user.email}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">

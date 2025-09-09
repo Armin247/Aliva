@@ -12,13 +12,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/10 to-white">
-        <div className="flex flex-col items-center gap-6">
+        <div className="flex flex-col items-center gap-8">
           <img
             src="/logo.svg"
             alt="Aliva logo"
-            className="h-14 w-14 animate-pulse"
+            className="h-28 w-28 animate-pulse"
           />
-          <div className="text-gray-600">Loading...</div>
+          <div className="h-12 w-12 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <div className="text-gray-700 text-base">Preparing your experience…</div>
         </div>
       </div>
     );

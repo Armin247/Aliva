@@ -21,7 +21,7 @@ export class ProfileService {
       
       if (profileSnap.exists()) {
         const data = profileSnap.data();
-        return {
+        const profile: UserProfile = {
           id: profileSnap.id,
           userId: data.userId,
           fullName: data.fullName,
@@ -30,9 +30,23 @@ export class ProfileService {
           allergies: data.allergies || [],
           age: data.age,
           activityLevel: data.activityLevel,
+          gender: data.gender || undefined,
+          heightCm: data.heightCm || undefined,
+          currentWeightKg: data.currentWeightKg || undefined,
+          targetWeightKg: data.targetWeightKg || undefined,
+          medicalConditions: data.medicalConditions || [],
+          smokingStatus: data.smokingStatus || undefined,
+          alcoholFrequency: data.alcoholFrequency || undefined,
+          weightHistory: (data.weightHistory || []).map((w: any) => ({
+            date: w.date?.toDate ? w.date.toDate() : new Date(w.date),
+            weightKg: w.weightKg,
+          })),
+          preferredCalorieTarget: data.preferredCalorieTarget || undefined,
+          photoURL: data.photoURL || undefined,
           createdAt: data.createdAt?.toDate(),
           updatedAt: data.updatedAt?.toDate(),
         };
+        return profile;
       }
       
       return null;
@@ -53,6 +67,19 @@ export class ProfileService {
         allergies: profileData.allergies || [],
         age: profileData.age || null,
         activityLevel: profileData.activityLevel || null,
+        gender: profileData.gender || null,
+        heightCm: profileData.heightCm || null,
+        currentWeightKg: profileData.currentWeightKg || null,
+        targetWeightKg: profileData.targetWeightKg || null,
+        medicalConditions: profileData.medicalConditions || [],
+        smokingStatus: profileData.smokingStatus || null,
+        alcoholFrequency: profileData.alcoholFrequency || null,
+        weightHistory: (profileData.weightHistory || []).map(w => ({
+          date: w.date,
+          weightKg: w.weightKg,
+        })),
+        preferredCalorieTarget: profileData.preferredCalorieTarget || null,
+        photoURL: profileData.photoURL || null,
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
