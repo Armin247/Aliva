@@ -4,22 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 const Profile: React.FC = () => {
   const { user, loading, signOut } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[60vh] text-gray-600">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="max-w-xl mx-auto p-6">
-        <h1 className="text-2xl font-bold mb-2">Profile</h1>
-        <p className="text-gray-600">You are not signed in.</p>
-      </div>
-    );
-  }
+  if (loading || !user) return null; // handled by ProtectedRoute
 
   const displayName = user.displayName ?? '';
   const email = user.email ?? '';

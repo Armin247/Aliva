@@ -3,6 +3,7 @@ import LoginChat from "@/components/LoginChat";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Salad, MapPin, ChefHat, History, Settings } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 const QuickAction = ({ icon: Icon, label }: { icon: any; label: string }) => (
   <Button variant="outline" className="justify-start gap-2">
@@ -12,6 +13,9 @@ const QuickAction = ({ icon: Icon, label }: { icon: any; label: string }) => (
 );
 
 const Dashboard = () => {
+  const { user, loading } = useAuth();
+  if (loading || !user) return null; // handled by ProtectedRoute
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/10 to-white">
       <Navigation />
