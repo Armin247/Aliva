@@ -15,7 +15,7 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ user: User | null; error: any }>;
   signIn: (email: string, password: string) => Promise<{ user: User | null; error: any }>;
-  signOut: () => Promise<void>; // ✅ Change from "logout" to "signOut"
+  signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

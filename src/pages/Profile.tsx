@@ -9,8 +9,8 @@ import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 <<<<<<< HEAD
-import { db } from '@/lib/firebase'; // You'll need to create this
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { profileService } from '@/services/profileService';
+import { UserProfile } from '@/types/profile';
 =======
 import { profileService } from '@/services/profileService';
 import { UserProfile } from '@/types/profile';
@@ -20,7 +20,7 @@ import { Loader2, Plus, X, User, Target, Shield, Activity } from 'lucide-react';
 const Profile = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [profile, setProfile] = useState<UserProfile>({});
+  const [profile, setProfile] = useState<Partial<UserProfile>>({});
   const [newDietaryPref, setNewDietaryPref] = useState('');
   const [newHealthGoal, setNewHealthGoal] = useState('');
   const [newAllergy, setNewAllergy] = useState('');
@@ -56,14 +56,18 @@ const Profile = () => {
     
     try {
 <<<<<<< HEAD
-      if (!user?.uid) return;
-      
-      const docRef = doc(db, 'profiles', user.uid);
-      const docSnap = await getDoc(docRef);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data() as UserProfile;
-        setProfile(data);
+      const profileData = await profileService.getProfile(user.uid);
+      if (profileData) {
+        setProfile({
+          userId: profileData.userId,
+          fullName: profileData.fullName,
+          dietaryPreferences: profileData.dietaryPreferences,
+          healthGoals: profileData.healthGoals,
+          allergies: profileData.allergies,
+          age: profileData.age,
+          activityLevel: profileData.activityLevel,
+        });
 =======
       const profileData = await profileService.getProfile(user.uid);
       if (profileData) {
@@ -95,17 +99,14 @@ const Profile = () => {
     setSaving(true);
     try {
 <<<<<<< HEAD
-      const docRef = doc(db, 'profiles', user.uid);
-      await setDoc(docRef, {
-        id: user.uid,
-        full_name: profile.full_name || '',
-        dietary_preferences: profile.dietary_preferences || [],
-        health_goals: profile.health_goals || [],
+      await profileService.upsertProfile(user.uid, {
+        fullName: profile.fullName,
+        dietaryPreferences: profile.dietaryPreferences || [],
+        healthGoals: profile.healthGoals || [],
         allergies: profile.allergies || [],
         age: profile.age,
-        activity_level: profile.activity_level || '',
-        updated_at: new Date(),
-      }, { merge: true });
+        activityLevel: profile.activityLevel,
+      });
 =======
       await profileService.upsertProfile(user.uid, {
         fullName: profile.fullName,

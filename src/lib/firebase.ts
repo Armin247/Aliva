@@ -22,7 +22,7 @@ export const auth = getAuth(app);
 // Initialize Cloud Firestore and get a reference to the service
 export const db = getFirestore(app);
 
-// Initialize Analytics (optional)
-export const analytics = getAnalytics(app);
+// Initialize Analytics (optional) - only in production
+export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 
 export default app;
