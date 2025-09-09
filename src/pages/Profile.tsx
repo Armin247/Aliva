@@ -19,10 +19,12 @@ import {
   ChartTooltipContent,
 } from '@/components/ui/chart';
 import { Line, LineChart, XAxis, YAxis } from 'recharts';
+import { useNavigate } from 'react-router-dom';
 
 const Profile: React.FC = () => {
-  const { user, loading } = useAuth();
+  const { user, loading, refreshUser } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [pageLoading, setPageLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -166,8 +168,8 @@ const Profile: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/10 to-white">
         <div className="flex flex-col items-center gap-8">
-          <img src="/logo.svg" alt="Aliva logo" className="h-24 w-24 animate-pulse" />
-          <div className="h-12 w-12 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <img src="/logo.svg" alt="Aliva logo" className="h-28 w-28 animate-pulse" />
+          <div className="h-16 w-16 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           <div className="text-gray-700 text-base">Authenticating…</div>
         </div>
       </div>
@@ -177,8 +179,8 @@ const Profile: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/10 to-white">
         <div className="flex flex-col items-center gap-9">
-          <img src="/logo.svg" alt="Aliva logo" className="h-28 w-28 animate-pulse" />
-          <div className="h-14 w-14 rounded-full border-2 border-primary border-t-transparent animate-spin" />
+          <img src="/logo.svg" alt="Aliva logo" className="h-32 w-32 animate-pulse" />
+          <div className="h-20 w-20 rounded-full border-2 border-primary border-t-transparent animate-spin" />
           <div className="text-gray-700 text-base">Loading your profile…</div>
         </div>
       </div>
@@ -200,6 +202,7 @@ const Profile: React.FC = () => {
         userId: user.uid,
       });
       toast({ title: 'Profile saved', description: 'Your changes have been saved.' });
+      navigate('/dashboard');
     } catch (e) {
       toast({ title: 'Save failed', description: 'Please try again.' });
     } finally {
@@ -232,7 +235,10 @@ const Profile: React.FC = () => {
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-      <h1 className="text-2xl font-bold mb-6">Profile</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Profile</h1>
+        <Button variant="outline" onClick={() => navigate('/dashboard')}>Back to dashboard</Button>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -266,11 +272,9 @@ const Profile: React.FC = () => {
                         if (prev) URL.revokeObjectURL(prev);
                         return localUrl;
                       });
-                      const fileRef = ref(storage, `avatars/${user.uid}.jpg`);
+                      const fileRef = ref(storage, `avatars/${user.uid}/${Date.now()}.jpg`);
                       await uploadBytes(fileRef, processed, { contentType: 'image/jpeg' });
-                      let url = await getDownloadURL(fileRef);
-                      // Cache-bust
-                      url = `${url}?ts=${Date.now()}`;
+                      const url = await getDownloadURL(fileRef);
                       updateField('photoURL', url);
                       // swap preview to remote URL once available
                       setAvatarPreview(prev => {
@@ -280,7 +284,7 @@ const Profile: React.FC = () => {
                       // Try updating auth profile first
                       try {
                         await updateAuthProfile(user, { photoURL: url });
-                        try { await user.reload(); } catch {}
+                        await refreshUser();
                       } catch (err) {
                         console.warn('Auth photo update failed', err);
                       }

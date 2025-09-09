@@ -169,9 +169,9 @@ const Navigation = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="rounded-full">
                     {user.photoURL ? (
-                      <img src={user.photoURL} alt="avatar" className="w-6 h-6 rounded-full mr-2 object-cover" />
+                      <img src={user.photoURL} alt="avatar" className="w-8 h-8 rounded-full mr-2 object-cover" />
                     ) : (
-                      <User className="w-4 h-4 mr-2" />
+                      <User className="w-5 h-5 mr-2" />
                     )}
                     {user.displayName || user.email}
                   </Button>
