@@ -16,11 +16,11 @@ const HeroSection = () => {
         <p className="mt-6 text-white/90 text-lg md:text-xl max-w-3xl mx-auto">
           Chat with an AI nutritionist, then discover restaurants or recipes that fit you.
         </p>
-        <div className="mt-12 md:mt-16 flex flex-col sm:flex-row gap-5 justify-center">
-          <Button variant="outline" size="xl" className="rounded-full h-14 px-8 bg-gradient-to-b from-primary-dark to-primary/95 text-white border-0 shadow-lg">
+        <div className="mt-8 md:mt-12 flex flex-row flex-wrap items-center justify-center gap-2">
+          <Button variant="outline" size="sm" className="rounded-full px-4 bg-gradient-to-b from-primary-dark to-primary/95 text-white border-0 shadow-md">
             <MessageCircle className="w-5 h-5 mr-2" /> Get Started Now
           </Button>
-          <Button variant="outline" size="xl" className="rounded-full h-14 px-8 bg-white text-foreground border-0 shadow-lg">
+          <Button variant="outline" size="sm" className="rounded-full px-4 bg-white text-foreground border border-black/5 shadow-md">
             Try Aliva Free
           </Button>
         </div>

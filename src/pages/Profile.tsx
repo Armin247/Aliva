@@ -8,19 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+<<<<<<< HEAD
 import { db } from '@/lib/firebase'; // You'll need to create this
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+=======
+import { profileService } from '@/services/profileService';
+import { UserProfile } from '@/types/profile';
+>>>>>>> 7b52ff88faa82ae1a28a9f5d19e888df649278df
 import { Loader2, Plus, X, User, Target, Shield, Activity } from 'lucide-react';
-
-interface UserProfile {
-  id?: string;
-  full_name?: string;
-  dietary_preferences?: string[];
-  health_goals?: string[];
-  allergies?: string[];
-  age?: number;
-  activity_level?: string;
-}
 
 const Profile = () => {
   const [loading, setLoading] = useState(true);
@@ -30,7 +25,7 @@ const Profile = () => {
   const [newHealthGoal, setNewHealthGoal] = useState('');
   const [newAllergy, setNewAllergy] = useState('');
   
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -47,15 +42,20 @@ const Profile = () => {
   ];
 
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       navigate('/auth');
       return;
     }
-    fetchProfile();
-  }, [user, navigate]);
+    if (user) {
+      fetchProfile();
+    }
+  }, [user, authLoading, navigate]);
 
   const fetchProfile = async () => {
+    if (!user) return;
+    
     try {
+<<<<<<< HEAD
       if (!user?.uid) return;
       
       const docRef = doc(db, 'profiles', user.uid);
@@ -64,11 +64,24 @@ const Profile = () => {
       if (docSnap.exists()) {
         const data = docSnap.data() as UserProfile;
         setProfile(data);
+=======
+      const profileData = await profileService.getProfile(user.uid);
+      if (profileData) {
+        setProfile({
+          userId: profileData.userId,
+          fullName: profileData.fullName,
+          dietaryPreferences: profileData.dietaryPreferences,
+          healthGoals: profileData.healthGoals,
+          allergies: profileData.allergies,
+          age: profileData.age,
+          activityLevel: profileData.activityLevel,
+        });
+>>>>>>> 7b52ff88faa82ae1a28a9f5d19e888df649278df
       }
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: 'Error loading profile',
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Failed to load profile',
         variant: 'destructive',
       });
     } finally {
@@ -81,6 +94,7 @@ const Profile = () => {
     
     setSaving(true);
     try {
+<<<<<<< HEAD
       const docRef = doc(db, 'profiles', user.uid);
       await setDoc(docRef, {
         id: user.uid,
@@ -92,15 +106,25 @@ const Profile = () => {
         activity_level: profile.activity_level || '',
         updated_at: new Date(),
       }, { merge: true });
+=======
+      await profileService.upsertProfile(user.uid, {
+        fullName: profile.fullName,
+        dietaryPreferences: profile.dietaryPreferences || [],
+        healthGoals: profile.healthGoals || [],
+        allergies: profile.allergies || [],
+        age: profile.age,
+        activityLevel: profile.activityLevel,
+      });
+>>>>>>> 7b52ff88faa82ae1a28a9f5d19e888df649278df
 
       toast({
         title: 'Profile updated!',
         description: 'Your nutrition profile has been saved successfully.',
       });
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: 'Error saving profile',
-        description: error.message,
+        description: error instanceof Error ? error.message : 'Failed to save profile',
         variant: 'destructive',
       });
     } finally {
@@ -108,7 +132,7 @@ const Profile = () => {
     }
   };
 
-  const addItem = (type: 'dietary_preferences' | 'health_goals' | 'allergies', value: string) => {
+  const addItem = (type: 'dietaryPreferences' | 'healthGoals' | 'allergies', value: string) => {
     if (!value.trim()) return;
     
     const currentItems = profile[type] || [];
@@ -120,12 +144,12 @@ const Profile = () => {
     }
     
     // Reset input
-    if (type === 'dietary_preferences') setNewDietaryPref('');
-    if (type === 'health_goals') setNewHealthGoal('');
+    if (type === 'dietaryPreferences') setNewDietaryPref('');
+    if (type === 'healthGoals') setNewHealthGoal('');
     if (type === 'allergies') setNewAllergy('');
   };
 
-  const removeItem = (type: 'dietary_preferences' | 'health_goals' | 'allergies', value: string) => {
+  const removeItem = (type: 'dietaryPreferences' | 'healthGoals' | 'allergies', value: string) => {
     const currentItems = profile[type] || [];
     setProfile({
       ...profile,
@@ -133,7 +157,7 @@ const Profile = () => {
     });
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -170,8 +194,8 @@ const Profile = () => {
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
                   id="fullName"
-                  value={profile.full_name || ''}
-                  onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                  value={profile.fullName || ''}
+                  onChange={(e) => setProfile({ ...profile, fullName: e.target.value })}
                   placeholder="Enter your full name"
                 />
               </div>
@@ -192,8 +216,8 @@ const Profile = () => {
               <div>
                 <Label htmlFor="activityLevel">Activity Level</Label>
                 <Select
-                  value={profile.activity_level || ''}
-                  onValueChange={(value) => setProfile({ ...profile, activity_level: value })}
+                  value={profile.activityLevel || ''}
+                  onValueChange={(value) => setProfile({ ...profile, activityLevel: value })}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select your activity level" />
@@ -237,7 +261,7 @@ const Profile = () => {
                   </SelectContent>
                 </Select>
                 <Button 
-                  onClick={() => addItem('health_goals', newHealthGoal)}
+                  onClick={() => addItem('healthGoals', newHealthGoal)}
                   size="sm"
                   disabled={!newHealthGoal}
                 >
@@ -246,12 +270,12 @@ const Profile = () => {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                {(profile.health_goals || []).map(goal => (
+                {(profile.healthGoals || []).map(goal => (
                   <Badge key={goal} variant="secondary" className="flex items-center gap-1">
                     {goal}
                     <X 
                       className="h-3 w-3 cursor-pointer" 
-                      onClick={() => removeItem('health_goals', goal)}
+                      onClick={() => removeItem('healthGoals', goal)}
                     />
                   </Badge>
                 ))}
@@ -286,7 +310,7 @@ const Profile = () => {
                   </SelectContent>
                 </Select>
                 <Button 
-                  onClick={() => addItem('dietary_preferences', newDietaryPref)}
+                  onClick={() => addItem('dietaryPreferences', newDietaryPref)}
                   size="sm"
                   disabled={!newDietaryPref}
                 >
@@ -295,12 +319,12 @@ const Profile = () => {
               </div>
               
               <div className="flex flex-wrap gap-2">
-                {(profile.dietary_preferences || []).map(pref => (
+                {(profile.dietaryPreferences || []).map(pref => (
                   <Badge key={pref} variant="secondary" className="flex items-center gap-1">
                     {pref}
                     <X 
                       className="h-3 w-3 cursor-pointer" 
-                      onClick={() => removeItem('dietary_preferences', pref)}
+                      onClick={() => removeItem('dietaryPreferences', pref)}
                     />
                   </Badge>
                 ))}

@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Bot, Send, Salad, Sparkles, User, MapPin } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type ChatMessage = {
   role: "user" | "assistant" | "restaurants";
@@ -181,7 +182,7 @@ const LoginChat = () => {
 
         <Separator className="mb-3" />
 
-        <div className="h-[340px] sm:h-[420px] rounded-lg border border-primary/10 bg-muted/10">
+        <div className="h-[260px] sm:h-[380px] md:h-[420px] rounded-lg border border-primary/10 bg-muted/10">
           <ScrollArea className="h-full w-full">
             <div ref={listRef} className="p-3 sm:p-4 space-y-3">
               {messages.map((m, idx) => (
@@ -242,33 +243,38 @@ const LoginChat = () => {
         </div>
       </Card>
 
-      <Dialog open={!!openRestaurants} onOpenChange={(v) => !v && setOpenRestaurants(null)}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Restaurants</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-3 max-h-[60vh] overflow-auto pr-2">
-            {openRestaurants?.map((r, i) => (
-              <div key={i} className="rounded-lg border flex overflow-hidden min-h-[116px]">
-                <div className="w-20 bg-primary/5 flex items-center justify-center rounded-l-lg text-3xl">
-                  {r.logo || "🍽️"}
-                </div>
-                <div className="flex-1 p-4 flex items-start justify-between gap-4">
-                  <div>
-                    <div className="font-semibold">{r.name}</div>
-                    <div className="text-sm text-muted-foreground">{r.dish} • {r.price} • {r.rating.toFixed(1)}★</div>
-                    <div className="text-xs text-muted-foreground mt-1">Healthy picks available • Suitable for dietary preferences</div>
+      {/* Desktop: removed modal per request */}
+
+      {/* Mobile bottom sheet */}
+      <div>
+        <Sheet open={!!openRestaurants} onOpenChange={(v) => !v && setOpenRestaurants(null)}>
+          <SheetContent side="bottom" className="rounded-t-2xl p-4 h-[80vh]">
+            <SheetHeader>
+              <SheetTitle>Restaurants</SheetTitle>
+            </SheetHeader>
+            <div className="space-y-3 max-h-[60vh] overflow-auto pt-2">
+              {openRestaurants?.map((r, i) => (
+                <div key={i} className="rounded-lg border flex overflow-hidden min-h-[116px]">
+                  <div className="w-16 bg-primary/5 flex items-center justify-center rounded-l-lg text-2xl">
+                    {r.logo || "🍽️"}
                   </div>
-                  <div className="text-right text-sm text-muted-foreground">
-                    <div>{r.eta}</div>
-                    <div>{r.distanceKm.toFixed(1)} km</div>
+                  <div className="flex-1 p-3 flex items-start justify-between gap-3">
+                    <div>
+                      <div className="font-semibold">{r.name}</div>
+                      <div className="text-xs text-muted-foreground">{r.dish} • {r.price} • {r.rating.toFixed(1)}★</div>
+                      <div className="text-xs text-muted-foreground mt-1">Healthy picks available</div>
+                    </div>
+                    <div className="text-right text-xs text-muted-foreground">
+                      <div>{r.eta}</div>
+                      <div>{r.distanceKm.toFixed(1)} km</div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+              ))}
+            </div>
+          </SheetContent>
+        </Sheet>
+      </div>
     </>
   );
 };
