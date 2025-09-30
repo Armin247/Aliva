@@ -19,6 +19,24 @@ const Navigation = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
+  // Helper function to get user initials
+  const getUserInitials = (name: string | null, email: string | null): string => {
+    if (name && name.trim()) {
+      return name
+        .trim()
+        .split(' ')
+        .map(part => part.charAt(0).toUpperCase())
+        .slice(0, 2)
+        .join('');
+    }
+    if (email && email.trim()) {
+      return email.charAt(0).toUpperCase();
+    }
+    return 'U'; // fallback to 'U' for User
+  };
+
+  const userInitials = getUserInitials(user?.displayName, user?.email);
+
   // Quotes data (text + gradient)
   const quotes = [
     { t: "Eat well, live well.", g: "from-primary to-primary-dark" },
@@ -126,7 +144,7 @@ const Navigation = () => {
 
   return (
     <nav className="fixed top-6 left-0 right-0 z-50">
-      <div className="max-w-6xl mx-auto px-4 relative">
+      <div className="max-w-6xl mx-auto px-3 sm:px-4 relative">
         <div className="h-14 sm:h-16 rounded-full bg-white shadow-xl border border-black/5 flex items-center justify-between px-3 sm:px-6 overflow-hidden">
           {/* Logo */}
           <div 
@@ -147,15 +165,15 @@ const Navigation = () => {
           </div>
 
           {/* Animated quotes (desktop only) */}
-          <div className="hidden md:flex flex-1 min-w-0 justify-center text-lg md:text-2xl font-semibold">
-            <div ref={lineRef} className="overflow-hidden h-10 md:h-12 relative w-full max-w-[1000px] text-center min-w-0">
+          <div className="hidden md:flex flex-1 min-w-0 justify-center text-base sm:text-lg md:text-2xl font-semibold">
+            <div ref={lineRef} className="overflow-hidden h-8 sm:h-10 md:h-12 relative w-full max-w-[1000px] text-center min-w-0">
               <div
                 className="absolute left-0 right-0 top-0"
                 style={{ transform: `translateY(-${quoteIdx * lineH}px)`, transition: 'transform 320ms ease' }}
               >
                 {quotes.map((q, i) => (
-                  <div key={i} className={`h-10 md:h-12 flex items-center justify-center bg-gradient-to-r ${q.g} bg-clip-text text-transparent`}>
-                    {`“${q.t}”`}
+                  <div key={i} className={`h-8 sm:h-10 md:h-12 flex items-center justify-center bg-gradient-to-r ${q.g} bg-clip-text text-transparent`}>
+                    {`"${q.t}"`}
                   </div>
                 ))}
               </div>
@@ -168,8 +186,10 @@ const Navigation = () => {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm" className="rounded-full">
-                    <User className="w-4 h-4 mr-2" />
-                    {((user as any)?.user_metadata?.full_name) || (user as any)?.email || "Profile"}
+                    <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold mr-2">
+                      {userInitials}
+                    </div>
+                    {user.displayName || user.email}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
@@ -193,7 +213,7 @@ const Navigation = () => {
             )}
           </div>
 
-          {/* Mobile menu icon at far right */}
+          {/* Mobile menu icon on the far right */}
           <button
             className="md:hidden p-2 rounded-lg hover:bg-primary/10 transition-colors"
             onClick={() => setIsMenuOpen(!isMenuOpen)}
@@ -209,11 +229,16 @@ const Navigation = () => {
 
         {/* Mobile flyout with a single action button */}
         {isMenuOpen && (
-          <div className="md:hidden absolute right-4 top-full mt-2 bg-white border border-black/5 rounded-xl shadow-xl p-2">
+          <div className="md:hidden absolute right-3 top-full mt-2 bg-white border border-black/5 rounded-xl shadow-xl p-2">
             {user ? (
-              <Button size="sm" className="rounded-full" onClick={() => { setIsMenuOpen(false); navigate('/profile'); }}>
-                <User className="w-4 h-4 mr-2" /> Profile
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-semibold">
+                  {userInitials}
+                </div>
+                <Button size="sm" className="rounded-full" onClick={() => { setIsMenuOpen(false); navigate('/profile'); }}>
+                  Profile
+                </Button>
+              </div>
             ) : (
               <Button size="sm" className="rounded-full" onClick={() => { setIsMenuOpen(false); navigate('/auth'); }}>
                 <User className="w-4 h-4 mr-2" /> Sign In

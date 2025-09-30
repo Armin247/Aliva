@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Salad } from 'lucide-react';
+import LoginChat from '@/components/LoginChat';
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -129,7 +130,7 @@ const Auth = () => {
                       <Label htmlFor="signin-password">Password</Label>
                       <Input id="signin-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required />
                     </div>
-                    <Button type="submit" className="w-full rounded-full h-12 bg-gradient-to-b from-primary-dark to-primary text-white" disabled={isLoading}>
+                    <Button type="submit" className="w-full rounded-full h-11 sm:h-12 bg-gradient-to-b from-primary-dark to-primary text-white" disabled={isLoading}>
                       {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Signing in...</>) : ('Sign In')}
                     </Button>
                   </form>
@@ -149,7 +150,7 @@ const Auth = () => {
                       <Label htmlFor="signup-password">Password</Label>
                       <Input id="signup-password" type="password" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} />
                     </div>
-                    <Button type="submit" className="w-full rounded-full h-12 bg-gradient-to-b from-primary-dark to-primary text-white" disabled={isLoading}>
+                    <Button type="submit" className="w-full rounded-full h-11 sm:h-12 bg-gradient-to-b from-primary-dark to-primary text-white" disabled={isLoading}>
                       {isLoading ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Creating account...</>) : ('Create Account')}
                     </Button>
                   </form>
@@ -160,8 +161,6 @@ const Auth = () => {
 
           <p className="text-center text-sm text-muted-foreground mt-6">By continuing, you agree to our Terms of Service and Privacy Policy</p>
         </div>
-
-        {/* No right panel on auth page */}
       </div>
     </div>
   );

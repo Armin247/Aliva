@@ -15,7 +15,8 @@ interface AuthContextType {
   loading: boolean;
   signUp: (email: string, password: string, fullName: string) => Promise<{ user: User | null; error: any }>;
   signIn: (email: string, password: string) => Promise<{ user: User | null; error: any }>;
-  signOut: () => Promise<void>; // ✅ Change from "logout" to "signOut"
+  signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -70,6 +71,16 @@ export function AuthProvider({ children }: AuthProviderProps) {
     return signOut(auth);
   };
 
+  const refreshUser = async () => {
+    try {
+      if (auth.currentUser) {
+        await auth.currentUser.reload();
+      }
+    } finally {
+      setUser(auth.currentUser);
+    }
+  };
+
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setUser(user);
@@ -84,7 +95,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     loading,
     signUp,
     signIn,
-    signOut: logout
+    signOut: logout,
+    refreshUser,
   };
 
   return (

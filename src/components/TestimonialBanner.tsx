@@ -1,4 +1,18 @@
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
+
 const TestimonialBanner = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const handleTryAliva = () => {
+    if (user) {
+      navigate('/dashboard');
+    } else {
+      navigate('/auth');
+    }
+  };
+
   return (
     <section className="py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -10,7 +24,12 @@ const TestimonialBanner = () => {
                 of users say Aliva helps them make smarter, faster, and more efficient food decisions.
               </p>
             </div>
-            <button className="mt-8 h-12 px-6 rounded-full bg-gradient-to-b from-primary/90 to-primary text-white font-medium w-max">Try Aliva Today</button>
+            <button 
+              className="mt-8 h-12 px-6 rounded-full bg-gradient-to-b from-primary/90 to-primary text-white font-medium w-max"
+              onClick={handleTryAliva}
+            >
+              Try Aliva Today
+            </button>
           </div>
           <div className="rounded-[28px] overflow-hidden shadow-xl border border-black/5">
             <div className="h-full w-full bg-[url('https://images.unsplash.com/photo-1607746882042-944635dfe10e?q=80&w=1600&auto=format&fit=crop')] bg-cover bg-center">
