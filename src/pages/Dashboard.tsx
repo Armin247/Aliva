@@ -26,18 +26,6 @@ const Dashboard = () => {
               <LoginChat />
             </Card>
           </div>
-          <div className="space-y-4">
-            <Card className="p-4">
-              <div className="font-semibold mb-3">Quick Actions</div>
-              <div className="grid grid-cols-1 gap-2">
-                <QuickAction icon={Salad} label="Start new consultation" />
-                <QuickAction icon={MapPin} label="Find healthy restaurants" />
-                <QuickAction icon={ChefHat} label="Generate a recipe" />
-                <QuickAction icon={History} label="View recent chats" />
-                <QuickAction icon={Settings} label="Preferences" />
-              </div>
-            </Card>
-          </div>
         </div>
       </main>
     </div>
