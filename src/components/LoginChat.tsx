@@ -6,7 +6,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Bot, Send, Salad, Sparkles, User, AlertCircle } from "lucide-react";
+import { Bot, Send, Salad, Sparkles, User, CircleAlert as AlertCircle } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 type ChatMessage = {
@@ -61,6 +61,7 @@ const LoginChat = () => {
   const [error, setError] = useState<string | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const [openRestaurants, setOpenRestaurants] = useState<RestaurantResult[] | null>(null);
+  const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
 
   useEffect(() => {
     // Initial greeting from Aliva
@@ -70,6 +71,22 @@ const LoginChat = () => {
         content: "Hello! I'm Aliva, your AI nutritionist. I'm here to help you make healthier food choices based on your needs and any health conditions you may have. Tell me how you're feeling today or what you'd like to eat, and I'll provide personalized recommendations.",
       },
     ]);
+
+    // Get user location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude,
+          });
+          console.log('📍 User location obtained');
+        },
+        (error) => {
+          console.log('❌ Could not get user location:', error);
+        }
+      );
+    }
   }, []);
 
   useEffect(() => {
@@ -91,7 +108,8 @@ const LoginChat = () => {
     try {
       console.log('🔄 Making API call to:', 'http://localhost:5000/api/chat');
       console.log('📨 Sending message:', userMessage);
-      
+      console.log('📍 User location:', userLocation);
+
       const response = await fetch('http://localhost:5000/api/chat', {
         method: 'POST',
         headers: {
@@ -99,7 +117,8 @@ const LoginChat = () => {
         },
         body: JSON.stringify({
           message: userMessage,
-          chatHistory: chatHistory.slice(-10) // Keep last 10 messages for context
+          chatHistory: chatHistory.slice(-10),
+          userLocation: userLocation
         }),
       });
 
@@ -113,7 +132,7 @@ const LoginChat = () => {
 
       const data = await response.json();
       console.log('✅ API Success:', data);
-      return data.response || data.fallbackResponse;
+      return { response: data.response || data.fallbackResponse, restaurants: data.restaurants };
     } catch (error) {
       console.error('❌ Error calling OpenAI:', error);
       console.error('❌ Error details:', {
@@ -152,36 +171,30 @@ const LoginChat = () => {
     setThinking(true);
     setError(null);
 
-    // Check if user wants to search for restaurants
-    if (isSearchTrigger(text)) {
-      const mentionedDish = extractDish(text);
-      const dish = mentionedDish || "healthy meal";
-      const results = makeRestaurantResults(dish);
-      
-      setTimeout(() => {
-        setMessages(prev => [
-          ...prev,
-          {
-            role: "assistant",
-            content: `Great! I've found some restaurants near you that offer ${dish}. I've prioritized places that typically have healthier options. You can also ask me about specific dietary modifications for any dish you're interested in.`,
-          },
-        ]);
-        setOpenRestaurants(results);
-        setThinking(false);
-      }, 1000);
-      return;
-    }
-
     try {
       // Get AI response from OpenAI
-      const aiResponse = await callOpenAI(text, messages);
-      
-      const assistantMsg: ChatMessage = { 
-        role: "assistant", 
-        content: aiResponse 
+      const result = await callOpenAI(text, messages);
+
+      const assistantMsg: ChatMessage = {
+        role: "assistant",
+        content: result.response
       };
 
       setMessages(prev => [...prev, assistantMsg]);
+
+      // If restaurants were returned, show them
+      if (result.restaurants && result.restaurants.length > 0) {
+        const formattedRestaurants: RestaurantResult[] = result.restaurants.map((r: any) => ({
+          name: r.name,
+          eta: `${Math.round(parseFloat(r.distance) * 2)}-${Math.round(parseFloat(r.distance) * 3)} min`,
+          rating: r.rating,
+          price: r.priceLevel,
+          distanceKm: parseFloat(r.distance),
+          dish: "healthy meal",
+          logo: "🍽️"
+        }));
+        setOpenRestaurants(formattedRestaurants);
+      }
     } catch (error) {
       setError("Sorry, I'm having trouble connecting right now. Please try again in a moment.");
       
