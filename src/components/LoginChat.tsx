@@ -9,8 +9,6 @@ import { Separator } from "@/components/ui/separator";
 import { Bot, Send, Salad, Sparkles, User, AlertCircle, MapPin, RotateCcw, ChefHat } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { db, auth } from "@/lib/firebase"; // Adjust path based on where you put firebase.js
-import { collection, query, orderBy, limit, getDocs, addDoc, serverTimestamp } from 'firebase/firestore';
 
 type ChatMessage = {
   role: "user" | "assistant" | "restaurants";
@@ -27,9 +25,6 @@ type RestaurantResult = {
   dish: string;
   logo?: string;
 };
-
-const GREEN_BUBBLE = "bg-primary/10 text-foreground";
-const WHITE_BUBBLE = "bg-white text-foreground";
 
 const LoginChat = () => {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -49,7 +44,7 @@ const LoginChat = () => {
     setMessages([
       {
         role: "assistant",
-        content: "Hello! I'm Aliva, your AI nutritionist. I'm here to help you make healthier food choices based on your needs and any health conditions you may have. Tell me how you're feeling today or what you'd like to eat, and I'll provide personalized recommendations.",
+        content: "Hi, I am Aliva. What can I help with?",
       },
     ]);
 
@@ -88,47 +83,23 @@ const LoginChat = () => {
       "Suggest a healthy breakfast",
       "I'm diabetic, what can I eat?",
       "Find restaurants near me",
-      "Start new consultation",
-      "Generate a recipe",
     ],
     []
   );
 
-  const saveCurrentChat = async () => {
-    if (messages.length <= 1) return;
-    
-    try {
-      const userId = auth.currentUser?.uid || 'guest';
-      
-      const lastUserMessage = messages.filter(m => m.role === 'user').pop();
-      const title = lastUserMessage ? lastUserMessage.content.substring(0, 30) + '...' : 'New Chat';
-      const lastMessage = messages[messages.length - 1]?.content.substring(0, 50) + '...' || '';
-      
-      const chatData = {
-        title,
-        lastMessage,
-        messages: messages,
-        timestamp: serverTimestamp()
-      };
-      
-      const chatsRef = collection(db, 'users', userId, 'chats');
-      await addDoc(chatsRef, chatData);
-      
-      console.log('Chat saved to Firebase successfully');
-    } catch (error) {
-      console.error('Error saving chat to Firebase:', error);
-    }
-  };
+  const actionButtons = useMemo(
+    () => [
+      { label: "Start new consultation", icon: RotateCcw, action: "new" },
+      { label: "Generate a recipe", icon: ChefHat, action: "recipe" },
+    ],
+    []
+  );
 
   const handleStartNewConsultation = () => {
-    if (messages.length > 1) {
-      saveCurrentChat();
-    }
-    
     setMessages([
       {
         role: "assistant",
-        content: "Hello! I'm Aliva, your AI nutritionist. I'm here to help you make healthier food choices based on your needs and any health conditions you may have. Tell me how you're feeling today or what you'd like to eat, and I'll provide personalized recommendations.",
+        content: "Hi, I am Aliva. What can I help with?",
       },
     ]);
     setInput("");
@@ -298,48 +269,25 @@ const LoginChat = () => {
   };
 
   const callOpenAI = async (userMessage: string, chatHistory: ChatMessage[]) => {
-    try {
-      const response = await fetch('http://localhost:5000/api/chat', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          message: userMessage,
-          chatHistory: chatHistory.slice(-10),
-          userLocation: userLocation
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || `HTTP ${response.status}: Failed to get AI response`);
-      }
-
-      const data = await response.json();
-      return { response: data.response || data.fallbackResponse, restaurants: data.restaurants };
-    } catch (error: any) {
-      throw error;
-    }
-  };
-
-  const getFallbackResponse = (text: string): string => {
-    let fallbackResponse = "I'm here to help with your nutrition needs. ";
+    // Simulate AI response for demo
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
-    const lowerText = text.toLowerCase();
+    const lowerText = userMessage.toLowerCase();
+    let response = "I'm here to help with your nutrition needs. ";
+    
     if (lowerText.includes('ulcer') || lowerText.includes('stomach') || lowerText.includes('acid')) {
-      fallbackResponse += "For stomach issues, try bland foods like oatmeal, bananas, and lean proteins. Avoid spicy, acidic, or fried foods.";
+      response = "For stomach issues like ulcers, I recommend:\n\n• Bland foods: oatmeal, bananas, rice\n• Lean proteins: chicken, fish, tofu\n• Non-citrus fruits: melons, apples\n• Avoid: spicy foods, caffeine, alcohol, fried foods\n\nWould you like specific meal suggestions?";
     } else if (lowerText.includes('diabetes') || lowerText.includes('sugar')) {
-      fallbackResponse += "For diabetes management, focus on high-fiber foods, lean proteins, and complex carbohydrates. Avoid refined sugars and processed foods.";
-    } else if (lowerText.includes('tired') || lowerText.includes('energy') || lowerText.includes('weak')) {
-      fallbackResponse += "For energy, try iron-rich foods like leafy greens, nuts, and lean meats, combined with vitamin C sources for better absorption.";
+      response = "For diabetes management, focus on:\n\n• High-fiber foods: whole grains, legumes\n• Lean proteins: fish, chicken, beans\n• Non-starchy vegetables: broccoli, spinach, peppers\n• Complex carbs over simple sugars\n• Avoid: refined sugars, white bread, sugary drinks\n\nWould you like a sample meal plan?";
+    } else if (lowerText.includes('breakfast')) {
+      response = "Here's a healthy breakfast idea:\n\n🍳 Veggie Omelet Bowl:\n• 2 eggs with spinach, tomatoes, mushrooms\n• Side of whole grain toast\n• Fresh berries\n• Green tea\n\nThis provides protein, fiber, vitamins, and sustained energy!";
     } else if (lowerText.includes('recipe')) {
-      fallbackResponse += "Here's a healthy recipe idea: Quinoa Buddha Bowl - Cook 1 cup quinoa, top with roasted vegetables (sweet potato, broccoli, bell peppers), add chickpeas, drizzle with tahini dressing. Rich in protein, fiber, and essential nutrients!";
+      response = "🥗 Quinoa Buddha Bowl Recipe:\n\nIngredients:\n• 1 cup quinoa\n• Roasted vegetables (sweet potato, broccoli, bell peppers)\n• Chickpeas\n• Tahini dressing\n• Avocado\n\nInstructions:\n1. Cook quinoa according to package\n2. Roast vegetables at 400°F for 25 min\n3. Arrange in bowl with chickpeas\n4. Drizzle with tahini and top with avocado\n\nRich in protein, fiber, and nutrients!";
     } else {
-      fallbackResponse += "Could you tell me more about your dietary needs or any health conditions I should consider?";
+      response += "Could you tell me more about your dietary needs or any health conditions I should consider?";
     }
     
-    return fallbackResponse;
+    return { response, restaurants: [] };
   };
 
   const handleSend = async () => {
@@ -376,15 +324,6 @@ const LoginChat = () => {
       }
     } catch (error) {
       setError("Sorry, I'm having trouble connecting right now. Please try again in a moment.");
-      
-      const fallbackResponse = getFallbackResponse(text);
-
-      const assistantMsg: ChatMessage = { 
-        role: "assistant", 
-        content: fallbackResponse 
-      };
-
-      setMessages(prev => [...prev, assistantMsg]);
     } finally {
       setThinking(false);
     }
@@ -392,125 +331,148 @@ const LoginChat = () => {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-full md:max-w-lg lg:max-w-xl xl:max-w-2xl px-3 sm:px-4 md:px-6 lg:px-8 py-3 md:py-6">
-      <Card className="w-full p-0 sm:p-5 md:p-5 bg-transparent md:bg-white border-0 shadow-none md:shadow-xl rounded-none md:rounded-xl">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
-            <Salad className="h-4 w-4 text-white" />
+      <div className="mx-auto w-full h-screen flex flex-col bg-white">
+        <div className="w-full max-w-2xl mx-auto flex flex-col h-full py-4 px-4">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
+              <Salad className="h-4 w-4 text-white" />
+            </div>
+            <div className="font-semibold">Chat with Aliva</div>
+            <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary border-primary/20">
+              AI Nutritionist
+            </Badge>
           </div>
-          <div className="font-semibold">Chat with Aliva</div>
-          <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary border-primary/20">
-            AI Nutritionist
-          </Badge>
-        </div>
 
-        <Separator className="mb-3 hidden md:block" />
+          {error && (
+            <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700">
+              <AlertCircle className="h-4 w-4" />
+              {error}
+            </div>
+          )}
 
-        {error && (
-          <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700">
-            <AlertCircle className="h-4 w-4" />
-            {error}
-          </div>
-        )}
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <ScrollArea className="flex-1 w-full">
+              <div ref={listRef} className="p-4 space-y-4 min-h-full flex flex-col justify-end">
+                {messages.map((m, idx) => (
+                  <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"} ${idx === 0 ? 'items-center min-h-[50vh]' : ''}`}>
+                    {m.role !== "user" && idx !== 0 && (
+                      <Avatar className="h-7 w-7 mr-2">
+                        <AvatarFallback className="bg-primary text-white">
+                          <Bot className="h-3.5 w-3.5" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                    {idx === 0 ? (
+                      <div className="text-center w-full">
+                        <h2 className="text-3xl font-semibold mb-2">Hi, I am Aliva.</h2>
+                        <p className="text-xl text-primary font-medium">What can I help with?</p>
+                      </div>
+                    ) : (
+                      <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
+                        m.role === "user" 
+                          ? "bg-white shadow-sm border border-gray-200" 
+                          : "bg-primary/10 border border-primary/20"
+                      }`}>
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</div>
+                      </div>
+                    )}
+                    {m.role === "user" && idx !== 0 && (
+                      <Avatar className="h-7 w-7 ml-2">
+                        <AvatarFallback className="bg-primary/10 text-primary">
+                          <User className="h-3.5 w-3.5" />
+                        </AvatarFallback>
+                      </Avatar>
+                    )}
+                  </div>
+                ))}
 
-        <div className="flex flex-col max-h-[calc(100vh-12rem)] md:max-h-[calc(100vh-16rem)] min-h-[260px] rounded-lg border border-primary/10 bg-muted/10">
-          <ScrollArea className="flex-1 w-full">
-            <div ref={listRef} className="p-3 sm:p-4 space-y-3">
-              {messages.map((m, idx) => (
-                <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
-                  {m.role !== "user" && (
+                {thinking && (
+                  <div className="flex justify-start">
                     <Avatar className="h-7 w-7 mr-2">
                       <AvatarFallback className="bg-primary text-white">
                         <Bot className="h-3.5 w-3.5" />
                       </AvatarFallback>
                     </Avatar>
-                  )}
-                  <div className={`max-w-[85%] rounded-2xl px-3 py-2 border ${
-                    m.role === "user" 
-                      ? WHITE_BUBBLE + " border-primary/10" 
-                      : GREEN_BUBBLE + " border-primary/20"
-                  }`}>
-                    <div className="text-sm leading-relaxed whitespace-pre-wrap">{m.content}</div>
-                  </div>
-                  {m.role === "user" && (
-                    <Avatar className="h-7 w-7 ml-2">
-                      <AvatarFallback className="bg-primary/10 text-primary">
-                        <User className="h-3.5 w-3.5" />
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                </div>
-              ))}
-
-              {thinking && (
-                <div className="flex justify-start">
-                  <Avatar className="h-7 w-7 mr-2">
-                    <AvatarFallback className="bg-primary text-white">
-                      <Bot className="h-3.5 w-3.5" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className={`max-w-[85%] rounded-2xl px-3 py-2 border ${GREEN_BUBBLE} border-primary/20`}>
-                    <div className="flex items-center gap-2 text-sm">
-                      <Sparkles className="h-4 w-4 animate-spin text-primary" />
-                      Aliva is thinking...
+                    <div className="max-w-[85%] rounded-2xl px-4 py-2.5 bg-primary/10 border border-primary/20">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Sparkles className="h-4 w-4 animate-spin text-primary" />
+                        Aliva is thinking...
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+            </ScrollArea>
+          </div>
+
+          {messages.length === 1 && (
+            <div className="flex flex-wrap gap-2 justify-center mb-4 mt-4">
+              {quickPrompts.map((q, i) => (
+                <Button 
+                  key={i} 
+                  size="sm" 
+                  variant="outline" 
+                  className="rounded-full text-xs hover:bg-primary/10 hover:text-primary border-primary/20 px-4 py-2" 
+                  onClick={() => {
+                    if (q === "Find restaurants near me") {
+                      handleFindRestaurants();
+                    } else {
+                      setInput(q);
+                    }
+                  }}
+                  disabled={thinking}
+                >
+                  {q === "Find restaurants near me" && <MapPin className="h-3 w-3 mr-1" />}
+                  {q}
+                </Button>
+              ))}
             </div>
-          </ScrollArea>
-        </div>
+          )}
 
-        <div className="mt-3 flex gap-2">
-          <Input
-            placeholder="Tell me about your health concerns or what you'd like to eat..."
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleSend()}
-            className="h-11 bg-white border-primary/20 focus:border-primary/40"
-          />
-          <Button 
-            onClick={handleSend} 
-            disabled={!input.trim() || thinking} 
-            variant="hero" 
-            className="px-4"
-          >
-            <Send className="h-4 w-4" />
-          </Button>
+          <div className="mt-auto pt-4 pb-2">
+            <div className="flex gap-2 items-center bg-gray-100 rounded-full px-4 py-2.5 border border-gray-200">
+              <Input
+                placeholder="Ask anything"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSend()}
+                className="flex-1 border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-gray-500 px-0"
+              />
+              <Button 
+                onClick={handleSend} 
+                disabled={!input.trim() || thinking} 
+                size="icon"
+                className="rounded-full h-9 w-9 bg-primary hover:bg-primary/90"
+              >
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {messages.length > 1 && (
+              <div className="flex flex-wrap gap-2 justify-center mt-3">
+                {actionButtons.map((btn, i) => (
+                  <Button 
+                    key={i} 
+                    size="sm" 
+                    variant="ghost" 
+                    className="text-xs text-primary hover:text-primary hover:bg-primary/10" 
+                    onClick={() => {
+                      if (btn.action === "new") {
+                        handleStartNewConsultation();
+                      } else if (btn.action === "recipe") {
+                        handleGenerateRecipe();
+                      }
+                    }}
+                    disabled={thinking}
+                  >
+                    <btn.icon className="h-3 w-3 mr-1" />
+                    {btn.label}
+                  </Button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-
-        <div className="mt-3 flex flex-wrap gap-2">
-          {quickPrompts.map((q, i) => (
-            <Button 
-              key={i} 
-              size="sm" 
-              variant="outline" 
-              className="text-xs hover:bg-primary/10 hover:text-primary border-primary/20" 
-              onClick={() => {
-                if (q === "Find restaurants near me") {
-                  handleFindRestaurants();
-                } else if (q === "Start new consultation") {
-                  handleStartNewConsultation();
-                } else if (q === "Generate a recipe") {
-                  handleGenerateRecipe();
-                } else {
-                  setInput(q);
-                }
-              }}
-              disabled={thinking}
-            >
-              {q === "Find restaurants near me" && <MapPin className="h-3 w-3 mr-1" />}
-              {q === "Start new consultation" && <RotateCcw className="h-3 w-3 mr-1" />}
-              {q === "Generate a recipe" && <ChefHat className="h-3 w-3 mr-1" />}
-              {q}
-            </Button>
-          ))}
-        </div>
-
-        <div className="mt-3 text-xs text-muted-foreground">
-          💡 Tip: Mention any health conditions, dietary restrictions, or how you're feeling for personalized advice.
-        </div>
-      </Card>
       </div>
 
       <Sheet open={!!openRestaurants} onOpenChange={(v) => !v && setOpenRestaurants(null)}>
