@@ -392,7 +392,8 @@ const LoginChat = () => {
 
   return (
     <>
-      <Card className="p-0 sm:p-5 md:p-5 bg-transparent md:bg-white border-0 shadow-none md:shadow-xl rounded-none md:rounded-xl">
+      <div className="mx-auto w-full max-w-full md:max-w-lg lg:max-w-xl xl:max-w-2xl px-3 sm:px-4 md:px-6 lg:px-8 py-3 md:py-6">
+      <Card className="w-full p-0 sm:p-5 md:p-5 bg-transparent md:bg-white border-0 shadow-none md:shadow-xl rounded-none md:rounded-xl">
         <div className="flex items-center gap-2 mb-3">
           <div className="h-8 w-8 rounded-full bg-primary flex items-center justify-center">
             <Salad className="h-4 w-4 text-white" />
@@ -412,8 +413,8 @@ const LoginChat = () => {
           </div>
         )}
 
-        <div className="h-[260px] sm:h-[380px] md:h-[420px] rounded-lg border border-primary/10 bg-muted/10">
-          <ScrollArea className="h-full w-full">
+        <div className="flex flex-col max-h-[calc(100vh-12rem)] md:max-h-[calc(100vh-16rem)] min-h-[260px] rounded-lg border border-primary/10 bg-muted/10">
+          <ScrollArea className="flex-1 w-full">
             <div ref={listRef} className="p-3 sm:p-4 space-y-3">
               {messages.map((m, idx) => (
                 <div key={idx} className={`flex ${m.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -510,6 +511,7 @@ const LoginChat = () => {
           💡 Tip: Mention any health conditions, dietary restrictions, or how you're feeling for personalized advice.
         </div>
       </Card>
+      </div>
 
       <Sheet open={!!openRestaurants} onOpenChange={(v) => !v && setOpenRestaurants(null)}>
         <SheetContent side="bottom" className="rounded-t-2xl p-4 h-[80vh]">
