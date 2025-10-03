@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 import { Utensils, MessageCircle, MapPin, ChefHat, Mail, Phone, MapPin as Location } from "lucide-react";
 
 const FooterSection = () => {
@@ -38,19 +39,19 @@ const FooterSection = () => {
             <h3 className="font-semibold text-foreground mb-6">Company</h3>
             <ul className="space-y-4">
               <li>
-                <a href="#about" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/about" className="text-muted-foreground hover:text-primary transition-colors">
                   About Us
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#blog" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/blog" className="text-muted-foreground hover:text-primary transition-colors">
                   Blog
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#contact" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/contact" className="text-muted-foreground hover:text-primary transition-colors">
                   Contact
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -60,24 +61,24 @@ const FooterSection = () => {
             <h3 className="font-semibold text-foreground mb-6">Support</h3>
             <ul className="space-y-4">
               <li>
-                <a href="#help" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/help" className="text-muted-foreground hover:text-primary transition-colors">
                   Help Center
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#privacy" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/privacy" className="text-muted-foreground hover:text-primary transition-colors">
                   Privacy Policy
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#terms" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/terms" className="text-muted-foreground hover:text-primary transition-colors">
                   Terms of Service
-                </a>
+                </Link>
               </li>
               <li>
-                <a href="#security" className="text-muted-foreground hover:text-primary transition-colors">
+                <Link to="/security" className="text-muted-foreground hover:text-primary transition-colors">
                   Security
-                </a>
+                </Link>
               </li>
             </ul>
           </div>
@@ -89,15 +90,15 @@ const FooterSection = () => {
               © 2025 Aliva. All rights reserved. Made with ❤️ for healthier living.
             </p>
             <div className="flex space-x-6">
-              <a href="#privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              <Link to="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Privacy
-              </a>
-              <a href="#terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              </Link>
+              <Link to="/terms" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Terms
-              </a>
-              <a href="#cookies" className="text-sm text-muted-foreground hover:text-primary transition-colors">
+              </Link>
+              <Link to="/privacy" className="text-sm text-muted-foreground hover:text-primary transition-colors">
                 Cookies
-              </a>
+              </Link>
             </div>
           </div>
         </div>
