@@ -9,14 +9,18 @@ const FooterSection = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Brand */}
           <div className="lg:col-span-1">
-            <div className="flex items-center space-x-2 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-r from-primary to-secondary rounded-lg flex items-center justify-center">
-                <Utensils className="w-6 h-6 text-white" />
+            <Link to="/#home" className="flex items-center space-x-3 mb-6 group">
+              <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
+                <img
+                  src="/logo.svg"
+                  alt="Aliva Logo"
+                  className="h-10 w-auto shrink-0"
+                  onError={() => {
+                    console.warn("Logo image not found, check if /logo.svg exists in public folder");
+                  }}
+                />
               </div>
-              <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                Aliva
-              </span>
-            </div>
+            </Link>
             <p className="text-muted-foreground mb-6 leading-relaxed">
               Your AI-powered nutrition platform for personalized dietary advice, 
               healthy restaurant discovery, and custom meal planning.

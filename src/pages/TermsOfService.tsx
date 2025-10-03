@@ -1,6 +1,7 @@
 import Navigation from "@/components/Navigation";
 import FooterSection from "@/components/FooterSection";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TermsOfService = () => {
   return (
@@ -16,40 +17,56 @@ const TermsOfService = () => {
           </div>
         </section>
 
-        <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12 space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>Acceptance of Terms</CardTitle>
-              <CardDescription>By using Aliva, you agree to these terms</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Using our services constitutes acceptance of these Terms and our Privacy Policy. If you do not agree, please discontinue use.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Use of Service</CardTitle>
-              <CardDescription>Personal, non-commercial use unless otherwise agreed</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                You may not misuse the service, attempt unauthorized access, or infringe on the rights of others. We may suspend accounts violating these terms.
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader>
-              <CardTitle>Disclaimers</CardTitle>
-              <CardDescription>Informational purposes only</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-muted-foreground">
-                Aliva provides guidance for educational purposes and is not a substitute for professional medical advice. Always consult qualified professionals for health decisions.
-              </p>
-            </CardContent>
-          </Card>
+        <section className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <Tabs defaultValue="accept">
+            <TabsList>
+              <TabsTrigger value="accept">Acceptance</TabsTrigger>
+              <TabsTrigger value="use">Use</TabsTrigger>
+              <TabsTrigger value="disclaimers">Disclaimers</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="accept" className="mt-4 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Acceptance of Terms</CardTitle>
+                  <CardDescription>By using Aliva, you agree to these terms</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Using our services constitutes acceptance of these Terms and our Privacy Policy. If you do not agree, please discontinue use.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="use" className="mt-4 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Use of Service</CardTitle>
+                  <CardDescription>Personal, non-commercial use unless otherwise agreed</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    You may not misuse the service, attempt unauthorized access, or infringe on the rights of others. We may suspend accounts violating these terms.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="disclaimers" className="mt-4 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Disclaimers</CardTitle>
+                  <CardDescription>Informational purposes only</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-muted-foreground">
+                    Aliva provides guidance for educational purposes and is not a substitute for professional medical advice. Always consult qualified professionals for health decisions.
+                  </p>
+                </CardContent>
+              </Card>
+            </TabsContent>
+          </Tabs>
         </section>
       </main>
       <FooterSection />

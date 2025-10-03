@@ -1,8 +1,24 @@
 import Navigation from "@/components/Navigation";
 import FooterSection from "@/components/FooterSection";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 const Security = () => {
+  const { toast } = useToast();
+  const [reporting, setReporting] = useState(false);
+
+  const handleReport = async () => {
+    try {
+      setReporting(true);
+      await new Promise((r) => setTimeout(r, 700));
+      toast({ title: 'Thanks for your report', description: 'Our team will review it shortly.' });
+    } finally {
+      setReporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -48,6 +64,23 @@ const Security = () => {
               <p className="text-sm text-muted-foreground">
                 Continuous monitoring and alerting help us detect anomalies and respond swiftly to potential issues.
               </p>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+          <Card>
+            <CardHeader>
+              <CardTitle>Report a Security Issue</CardTitle>
+              <CardDescription>Help us keep Aliva safe for everyone</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between gap-4 flex-col sm:flex-row">
+                <p className="text-sm text-muted-foreground">
+                  If you’ve discovered a vulnerability, please report it responsibly. We appreciate your help.
+                </p>
+                <Button onClick={handleReport} disabled={reporting}>{reporting ? 'Submitting…' : 'Report an issue'}</Button>
+              </div>
             </CardContent>
           </Card>
         </section>

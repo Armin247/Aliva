@@ -2,6 +2,9 @@ import Navigation from "@/components/Navigation";
 import FooterSection from "@/components/FooterSection";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useMemo, useState } from "react";
 
 const HelpCenter = () => {
   return (
@@ -24,28 +27,13 @@ const HelpCenter = () => {
               <CardDescription>Get instant answers to common topics</CardDescription>
             </CardHeader>
             <CardContent>
-              <Accordion type="single" collapsible className="w-full">
-                <AccordionItem value="personalization">
-                  <AccordionTrigger>How does personalization work?</AccordionTrigger>
-                  <AccordionContent>
-                    Aliva tailors recommendations based on your preferences and goals. You can adjust inputs anytime in your profile for better results.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="restaurants">
-                  <AccordionTrigger>How do you rate restaurants?</AccordionTrigger>
-                  <AccordionContent>
-                    We combine menu analysis with nutrition heuristics to highlight healthier options. Filters help you align choices with your targets.
-                  </AccordionContent>
-                </AccordionItem>
-                <AccordionItem value="privacy">
-                  <AccordionTrigger>What data do you store?</AccordionTrigger>
-                  <AccordionContent>
-                    We store essential data to power your experience and never sell your information. See our Privacy Policy for full details.
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
+              <HelpFaq />
             </CardContent>
           </Card>
+
+          <div className="mt-6 text-center">
+            <Button onClick={() => (window.location.href = '/contact')}>Still need help? Contact us</Button>
+          </div>
         </section>
       </main>
       <FooterSection />
@@ -54,5 +42,41 @@ const HelpCenter = () => {
 };
 
 export default HelpCenter;
+
+function HelpFaq() {
+  const [query, setQuery] = useState("");
+  const faqs = [
+    { q: "How does personalization work?", a: "Aliva tailors recommendations based on your preferences and goals. You can adjust inputs anytime in your profile for better results." },
+    { q: "How do you rate restaurants?", a: "We combine menu analysis with nutrition heuristics to highlight healthier options. Filters help you align choices with your targets." },
+    { q: "What data do you store?", a: "We store essential data to power your experience and never sell your information. See our Privacy Policy for full details." },
+    { q: "Can I export my data?", a: "Yes, contact us to request a data export, and we’ll provide your information securely." },
+  ];
+
+  const filtered = useMemo(() => {
+    return faqs.filter((f) => (f.q + " " + f.a).toLowerCase().includes(query.toLowerCase()));
+  }, [faqs, query]);
+
+  return (
+    <div className="space-y-4">
+      <Input
+        placeholder="Search FAQs"
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        className="mb-2"
+      />
+      <Accordion type="single" collapsible className="w-full">
+        {filtered.map((f, idx) => (
+          <AccordionItem key={idx} value={`item-${idx}`}>
+            <AccordionTrigger>{f.q}</AccordionTrigger>
+            <AccordionContent>{f.a}</AccordionContent>
+          </AccordionItem>
+        ))}
+        {filtered.length === 0 && (
+          <div className="text-sm text-muted-foreground p-4">No results found.</div>
+        )}
+      </Accordion>
+    </div>
+  );
+}
 
 

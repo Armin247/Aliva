@@ -4,8 +4,44 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 const Contact = () => {
+  const { toast } = useToast();
+  const [submitting, setSubmitting] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+    const formData = new FormData(form);
+    const name = String(formData.get('name') || '').trim();
+    const email = String(formData.get('email') || '').trim();
+    const subject = String(formData.get('subject') || '').trim();
+    const message = String(formData.get('message') || '').trim();
+
+    if (!name || !email || !subject || !message) {
+      toast({ title: 'Missing information', description: 'Please fill in all fields.' });
+      return;
+    }
+    const emailRegex = /[^\s@]+@[^\s@]+\.[^\s@]+/;
+    if (!emailRegex.test(email)) {
+      toast({ title: 'Invalid email', description: 'Please enter a valid email address.' });
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      await new Promise((res) => setTimeout(res, 700));
+      toast({ title: 'Message sent ✅', description: 'We will get back to you shortly.' });
+      form.reset();
+    } catch (err) {
+      toast({ title: 'Something went wrong', description: 'Please try again later.' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex flex-col">
       <Navigation />
@@ -28,15 +64,15 @@ const Contact = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form className="grid gap-4">
+              <form className="grid gap-4" onSubmit={handleSubmit}>
                 <div className="grid md:grid-cols-2 gap-4">
-                  <Input placeholder="Full name" />
-                  <Input type="email" placeholder="Email address" />
+                  <Input name="name" placeholder="Full name" />
+                  <Input name="email" type="email" placeholder="Email address" />
                 </div>
-                <Input placeholder="Subject" />
-                <Textarea placeholder="How can we help?" className="min-h-[120px]" />
+                <Input name="subject" placeholder="Subject" />
+                <Textarea name="message" placeholder="How can we help?" className="min-h-[120px]" />
                 <div>
-                  <Button type="button">Send message</Button>
+                  <Button type="submit" disabled={submitting}>{submitting ? 'Sending…' : 'Send message'}</Button>
                 </div>
               </form>
             </CardContent>
