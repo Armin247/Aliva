@@ -33,36 +33,6 @@ const FooterSection = () => {
             </div>
           </div>
 
-          {/* Features */}
-          <div>
-            <h3 className="font-semibold text-foreground mb-6">Features</h3>
-            <ul className="space-y-4">
-              <li>
-                <a href="#consultation" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
-                  <MessageCircle className="w-4 h-4 mr-2" />
-                  AI Consultation
-                </a>
-              </li>
-              <li>
-                <a href="#restaurants" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
-                  <MapPin className="w-4 h-4 mr-2" />
-                  Restaurant Discovery
-                </a>
-              </li>
-              <li>
-                <a href="#recipes" className="text-muted-foreground hover:text-primary transition-colors flex items-center">
-                  <ChefHat className="w-4 h-4 mr-2" />
-                  Custom Recipes
-                </a>
-              </li>
-              <li>
-                <a href="#meal-planning" className="text-muted-foreground hover:text-primary transition-colors">
-                  Meal Planning
-                </a>
-              </li>
-            </ul>
-          </div>
-
           {/* Company */}
           <div>
             <h3 className="font-semibold text-foreground mb-6">Company</h3>
@@ -70,11 +40,6 @@ const FooterSection = () => {
               <li>
                 <a href="#about" className="text-muted-foreground hover:text-primary transition-colors">
                   About Us
-                </a>
-              </li>
-              <li>
-                <a href="#careers" className="text-muted-foreground hover:text-primary transition-colors">
-                  Careers
                 </a>
               </li>
               <li>
