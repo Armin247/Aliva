@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -18,6 +18,7 @@ const Navigation = () => {
   const { toast } = useToast();
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   // Helper function to get user initials
   const getUserInitials = (name: string | null, email: string | null): string => {
@@ -149,7 +150,13 @@ const Navigation = () => {
           {/* Logo */}
           <div 
             className="flex items-center space-x-3 cursor-pointer group"
-            onClick={() => scrollToSection('home')}
+            onClick={() => {
+              if (location.pathname !== '/') {
+                navigate('/#home');
+              } else {
+                scrollToSection('home');
+              }
+            }}
           >
             <div className="flex items-center justify-center group-hover:scale-110 transition-transform">
               <img 

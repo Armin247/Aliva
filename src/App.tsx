@@ -1,4 +1,6 @@
 import React from "react";
+import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,6 +41,8 @@ const App: React.FC = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
+            {/* Hash-based smooth scrolling */}
+            <ScrollToHash />
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/auth" element={<Auth />} />
@@ -63,3 +67,22 @@ const App: React.FC = () => {
 };
 
 export default App;
+
+// Helper component to scroll to an element by the URL hash
+function ScrollToHash() {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.hash) {
+      const id = location.hash.replace('#', '');
+      const el = document.getElementById(id);
+      if (el) {
+        setTimeout(() => {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 0);
+      }
+    }
+  }, [location]);
+
+  return null;
+}
