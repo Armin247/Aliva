@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { Loader as Loader2, Salad } from 'lucide-react';
+import { Loader as Loader2 } from 'lucide-react';
 import LoginChat from '@/components/LoginChat';
 
 const Auth = () => {
@@ -99,10 +99,11 @@ const Auth = () => {
       <div className="w-full max-w-4xl">
         <div className="text-center mb-8">
           <div className="flex items-center justify-center gap-2 mb-4">
-            <Salad className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-              Aliva
-            </span>
+            <img
+              src="/logo.svg"
+              alt="Aliva Logo"
+              className="h-10 w-auto"
+            />
           </div>
           <p className="text-muted-foreground">Your AI-powered nutrition companion</p>
         </div>
