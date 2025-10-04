@@ -6,9 +6,11 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Bot, Send, Salad, Sparkles, User, AlertCircle, MapPin, RotateCcw, ChefHat } from "lucide-react";
+import { Bot, Send, Salad, Sparkles, User, AlertCircle, MapPin, RotateCcw, ChefHat, Crown } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useAuth } from "@/contexts/AuthContext";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 type ChatMessage = {
   role: "user" | "assistant" | "restaurants";
@@ -27,10 +29,13 @@ type RestaurantResult = {
 };
 
 const LoginChat = () => {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [remainingRequests, setRemainingRequests] = useState<number | null>(null);
+  const [showUpgradePrompt, setShowUpgradePrompt] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const [openRestaurants, setOpenRestaurants] = useState<RestaurantResult[] | null>(null);
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
@@ -269,25 +274,39 @@ const LoginChat = () => {
   };
 
   const callOpenAI = async (userMessage: string, chatHistory: ChatMessage[]) => {
-    // Simulate AI response for demo
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const lowerText = userMessage.toLowerCase();
-    let response = "I'm here to help with your nutrition needs. ";
-    
-    if (lowerText.includes('ulcer') || lowerText.includes('stomach') || lowerText.includes('acid')) {
-      response = "For stomach issues like ulcers, I recommend:\n\n• Bland foods: oatmeal, bananas, rice\n• Lean proteins: chicken, fish, tofu\n• Non-citrus fruits: melons, apples\n• Avoid: spicy foods, caffeine, alcohol, fried foods\n\nWould you like specific meal suggestions?";
-    } else if (lowerText.includes('diabetes') || lowerText.includes('sugar')) {
-      response = "For diabetes management, focus on:\n\n• High-fiber foods: whole grains, legumes\n• Lean proteins: fish, chicken, beans\n• Non-starchy vegetables: broccoli, spinach, peppers\n• Complex carbs over simple sugars\n• Avoid: refined sugars, white bread, sugary drinks\n\nWould you like a sample meal plan?";
-    } else if (lowerText.includes('breakfast')) {
-      response = "Here's a healthy breakfast idea:\n\n🍳 Veggie Omelet Bowl:\n• 2 eggs with spinach, tomatoes, mushrooms\n• Side of whole grain toast\n• Fresh berries\n• Green tea\n\nThis provides protein, fiber, vitamins, and sustained energy!";
-    } else if (lowerText.includes('recipe')) {
-      response = "🥗 Quinoa Buddha Bowl Recipe:\n\nIngredients:\n• 1 cup quinoa\n• Roasted vegetables (sweet potato, broccoli, bell peppers)\n• Chickpeas\n• Tahini dressing\n• Avocado\n\nInstructions:\n1. Cook quinoa according to package\n2. Roast vegetables at 400°F for 25 min\n3. Arrange in bowl with chickpeas\n4. Drizzle with tahini and top with avocado\n\nRich in protein, fiber, and nutrients!";
-    } else {
-      response += "Could you tell me more about your dietary needs or any health conditions I should consider?";
+    const response = await fetch('http://localhost:5000/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: userMessage,
+        chatHistory: chatHistory.map(msg => ({
+          role: msg.role,
+          content: msg.content
+        })),
+        userId: user?.uid,
+        userEmail: user?.email
+      }),
+    });
+
+    if (response.status === 429) {
+      const data = await response.json();
+      setShowUpgradePrompt(true);
+      throw new Error(data.message || 'Daily limit reached');
     }
-    
-    return { response, restaurants: [] };
+
+    if (!response.ok) {
+      throw new Error('Failed to get response from AI');
+    }
+
+    const data = await response.json();
+
+    if (data.remainingRequests !== null && data.remainingRequests !== undefined) {
+      setRemainingRequests(data.remainingRequests);
+    }
+
+    return { response: data.response, restaurants: [] };
   };
 
   const handleSend = async () => {
@@ -322,8 +341,8 @@ const LoginChat = () => {
         }));
         setOpenRestaurants(formattedRestaurants);
       }
-    } catch (error) {
-      setError("Sorry, I'm having trouble connecting right now. Please try again in a moment.");
+    } catch (error: any) {
+      setError(error.message || "Sorry, I'm having trouble connecting right now. Please try again in a moment.");
     } finally {
       setThinking(false);
     }
@@ -341,7 +360,23 @@ const LoginChat = () => {
             <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary border-primary/20">
               AI Nutritionist
             </Badge>
+            {remainingRequests !== null && (
+              <Badge variant="outline" className="border-primary/30 text-primary">
+                {remainingRequests} requests left
+              </Badge>
+            )}
           </div>
+
+          {showUpgradePrompt && (
+            <Alert className="mb-3 border-primary/30 bg-primary/5">
+              <Crown className="h-4 w-4 text-primary" />
+              <AlertTitle>Upgrade to Pro</AlertTitle>
+              <AlertDescription className="flex items-center justify-between">
+                <span>You've reached your daily limit of 3 requests. Upgrade to Pro for unlimited access!</span>
+                <Button size="sm" className="ml-2 shrink-0">Upgrade Now</Button>
+              </AlertDescription>
+            </Alert>
+          )}
 
           {error && (
             <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700">

@@ -3,9 +3,15 @@ import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import { createClient } from '@supabase/supabase-js';
 
 // Load environment variables
 dotenv.config();
+
+// Initialize Supabase
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -59,24 +65,119 @@ Remember: You're here to guide users toward healthier eating choices while being
 // Chat endpoint
 app.post('/api/chat', async (req, res) => {
   console.log('📥 Received chat request');
-  
+
   try {
-    const { message, chatHistory = [] } = req.body;
+    const { message, chatHistory = [], userId, userEmail } = req.body;
     console.log('📨 Message:', message);
     console.log('📚 Chat history length:', chatHistory.length);
+    console.log('👤 User ID:', userId);
 
     if (!message) {
       console.log('❌ No message provided');
       return res.status(400).json({ error: 'Message is required' });
     }
 
+    if (!userId) {
+      console.log('❌ No user ID provided');
+      return res.status(401).json({ error: 'User authentication required' });
+    }
+
     // Check if OpenAI is initialized
     if (!openai) {
       console.log('❌ OpenAI not initialized');
-      return res.status(500).json({ 
+      return res.status(500).json({
         error: 'OpenAI API key not configured',
         fallbackResponse: "I'm experiencing configuration issues. For general health advice, focus on balanced meals with plenty of vegetables, lean proteins, and whole grains. Please try again later."
       });
+    }
+
+    // Check or create user profile
+    let { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (profileError && profileError.code !== 'PGRST116') {
+      console.error('❌ Error fetching profile:', profileError);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    // Create profile if it doesn't exist
+    if (!profile) {
+      const { data: newProfile, error: createError } = await supabase
+        .from('user_profiles')
+        .insert({ user_id: userId, email: userEmail || 'unknown@email.com' })
+        .select()
+        .single();
+
+      if (createError) {
+        console.error('❌ Error creating profile:', createError);
+        return res.status(500).json({ error: 'Failed to create user profile' });
+      }
+      profile = newProfile;
+    }
+
+    // If user is not pro, check request limits
+    if (!profile.is_pro) {
+      const today = new Date().toISOString().split('T')[0];
+
+      // Get today's request count
+      let { data: requestData, error: requestError } = await supabase
+        .from('chat_requests')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('request_date', today)
+        .maybeSingle();
+
+      if (requestError && requestError.code !== 'PGRST116') {
+        console.error('❌ Error fetching requests:', requestError);
+        return res.status(500).json({ error: 'Database error' });
+      }
+
+      const currentCount = requestData?.request_count || 0;
+
+      // Check if limit exceeded
+      if (currentCount >= 3) {
+        console.log('❌ Request limit exceeded for user:', userId);
+        return res.status(429).json({
+          error: 'Daily limit reached',
+          message: 'You have reached your daily limit of 3 requests. Upgrade to Pro for unlimited access!',
+          remainingRequests: 0,
+          limitReached: true
+        });
+      }
+
+      // Increment or create request count
+      if (requestData) {
+        const { error: updateError } = await supabase
+          .from('chat_requests')
+          .update({
+            request_count: currentCount + 1,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', requestData.id);
+
+        if (updateError) {
+          console.error('❌ Error updating request count:', updateError);
+        }
+      } else {
+        const { error: insertError } = await supabase
+          .from('chat_requests')
+          .insert({
+            user_id: userId,
+            request_date: today,
+            request_count: 1
+          });
+
+        if (insertError) {
+          console.error('❌ Error inserting request count:', insertError);
+        }
+      }
+
+      console.log(`✅ Request ${currentCount + 1}/3 for user:`, userId);
+    } else {
+      console.log('✅ Pro user - unlimited requests');
     }
 
     // Build conversation history for context
@@ -106,9 +207,26 @@ app.post('/api/chat', async (req, res) => {
     console.log('✅ OpenAI response received');
     console.log('📤 Response preview:', aiResponse.substring(0, 100) + '...');
 
-    return res.status(200).json({ 
+    // Calculate remaining requests for non-pro users
+    let remainingRequests = null;
+    if (!profile.is_pro) {
+      const today = new Date().toISOString().split('T')[0];
+      const { data: requestData } = await supabase
+        .from('chat_requests')
+        .select('request_count')
+        .eq('user_id', userId)
+        .eq('request_date', today)
+        .maybeSingle();
+
+      const currentCount = requestData?.request_count || 0;
+      remainingRequests = Math.max(0, 3 - currentCount);
+    }
+
+    return res.status(200).json({
       response: aiResponse,
-      usage: completion.usage 
+      usage: completion.usage,
+      remainingRequests,
+      isPro: profile.is_pro
     });
 
   } catch (error) {
