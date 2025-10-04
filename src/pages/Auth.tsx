@@ -35,7 +35,7 @@ const Auth = () => {
     if (error) {
       toast({
         title: 'Sign in failed',
-        description: error.message,
+        description: 'Wrong credentials',
         variant: 'destructive',
       });
     } else {
