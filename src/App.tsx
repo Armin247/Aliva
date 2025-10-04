@@ -1,8 +1,7 @@
 import React from "react";
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
@@ -39,9 +38,13 @@ const App: React.FC = () => {
       <BrowserRouter>
         <AuthProvider>
           <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            {/* Hash-based smooth scrolling */}
+            <Toaster 
+              position="top-right"
+              richColors
+              closeButton
+              expand={false}
+              duration={4000}
+            />
             <ScrollToHash />
             <Routes>
               <Route path="/" element={<Index />} />
