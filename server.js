@@ -7,162 +7,299 @@ import dotenv from 'dotenv';
 // Load environment variables
 dotenv.config();
 
-const app = express();
-const port = process.env.PORT || 5000;
+// Configuration
+const CONFIG = {
+  PORT: process.env.PORT || 5000,
+  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  NODE_ENV: process.env.NODE_ENV || 'development',
+  CORS_ORIGINS: [
+    'http://localhost:8080',
+    'http://localhost:5173', 
+    'http://localhost:3000',
+    'http://localhost',
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null
+  ].filter(Boolean),
+  OPENAI_CONFIG: {
+    model: 'gpt-3.5-turbo',
+    maxTokens: 500,
+    temperature: 0.7,
+    presencePenalty: 0.1,
+    frequencyPenalty: 0.1,
+  }
+};
 
-// Middleware
+// System Prompt
+const ALIVA_SYSTEM_PROMPT = `You are Aliva, a professional AI nutritionist and health advisor. You provide evidence-based, compassionate nutrition guidance.
+
+Core Principles:
+- Prioritize user safety and well-being
+- Provide specific, actionable dietary advice
+- Consider medical conditions and allergies (especially those in user profiles)
+- Be empathetic and supportive
+- Keep responses concise (2-4 sentences typically)
+- Recommend consulting healthcare providers for serious conditions
+
+Response Guidelines:
+- Acknowledge the user's concern first
+- Provide specific food recommendations with portions when relevant
+- Consider preparation methods and meal timing
+- End with encouragement or a practical tip
+- For serious symptoms, gently suggest medical consultation
+
+Important: ALWAYS avoid foods the user is allergic to. Pay special attention to profile information marked as "IMPORTANT" or "CRITICAL" or "MUST AVOID".`;
+
+// Initialize Express App
+const app = express();
+
+// Middleware Setup
 app.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:3000', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '*'],
+  origin: CONFIG.CORS_ORIGINS,
   methods: ['GET', 'POST'],
   credentials: true
 }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.path}`);
+  next();
+});
 
 // Initialize OpenAI
-let openai;
-try {
-  if (!process.env.OPENAI_API_KEY) {
-    console.error('❌ OPENAI_API_KEY is not set in environment variables');
-  } else {
-    openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
-    console.log('✅ OpenAI API Key configured');
-  }
-} catch (error) {
-  console.error('❌ Error initializing OpenAI:', error.message);
-}
+let openaiClient = null;
 
-const ALIVA_SYSTEM_PROMPT = `You are Aliva, a professional AI nutritionist and medical practitioner specializing in dietary guidance and health recommendations. You provide evidence-based, compassionate, and personalized nutrition advice.
-
-Key characteristics:
-- Professional yet approachable tone
-- Always prioritize patient safety and well-being
-- Provide specific, actionable dietary recommendations
-- Consider medical conditions when giving advice
-- Encourage users to consult healthcare providers for serious conditions
-- Focus on whole foods, balanced nutrition, and sustainable eating habits
-- Be empathetic to users' challenges and preferences
-
-Guidelines for responses:
-- Keep responses concise but informative (2-4 sentences typically)
-- Always acknowledge the user's condition or concern
-- Provide specific food recommendations when appropriate
-- Mention portion sizes or preparation methods when relevant
-- If a user mentions serious symptoms, gently suggest consulting a doctor
-- End with an encouraging or supportive statement when appropriate
-
-When users ask about restaurant searches or want to find places to eat, respond positively and suggest they can say "find restaurants" to see nearby options that align with your recommendations.
-
-Remember: You're here to guide users toward healthier eating choices while being understanding of their current situation and preferences.`;
-
-// Chat endpoint
-app.post('/api/chat', async (req, res) => {
-  console.log('📥 Received chat request');
-
+const initializeOpenAI = () => {
   try {
-    const { message, chatHistory = [] } = req.body;
-    console.log('📨 Message:', message);
-    console.log('📚 Chat history length:', chatHistory.length);
-
-    if (!message) {
-      console.log('❌ No message provided');
-      return res.status(400).json({ error: 'Message is required' });
+    if (!CONFIG.OPENAI_API_KEY) {
+      console.error('❌ OPENAI_API_KEY not found in environment variables');
+      console.error('💡 Create a .env file with: OPENAI_API_KEY=sk-...');
+      return false;
     }
 
-    // Check if OpenAI is initialized
-    if (!openai) {
-      console.log('❌ OpenAI not initialized');
-      return res.status(500).json({
-        error: 'OpenAI API key not configured',
-        fallbackResponse: "I'm experiencing configuration issues. For general health advice, focus on balanced meals with plenty of vegetables, lean proteins, and whole grains. Please try again later."
+    openaiClient = new OpenAI({
+      apiKey: CONFIG.OPENAI_API_KEY,
+    });
+    
+    console.log('✅ OpenAI client initialized successfully');
+    return true;
+  } catch (error) {
+    console.error('❌ Failed to initialize OpenAI:', error.message);
+    return false;
+  }
+};
+
+// Helper: Build messages for OpenAI
+const buildMessages = (userMessage, chatHistory = []) => {
+  const messages = [
+    { role: 'system', content: ALIVA_SYSTEM_PROMPT }
+  ];
+
+  // Add last 8 messages for context (to stay within token limits)
+  const recentHistory = chatHistory.slice(-8);
+  recentHistory.forEach(msg => {
+    messages.push({
+      role: msg.role === 'assistant' ? 'assistant' : 'user',
+      content: msg.content
+    });
+  });
+
+  // Add current user message
+  messages.push({ role: 'user', content: userMessage });
+
+  return messages;
+};
+
+// Helper: Generate fallback response
+const getFallbackResponse = (errorCode = null) => {
+  const fallbacks = {
+    invalid_api_key: "I'm experiencing configuration issues. Please contact support to resolve the API key issue.",
+    rate_limit_exceeded: "I'm receiving too many requests. Please wait a moment and try again.",
+    insufficient_quota: "The AI service quota has been exceeded. Please check your OpenAI billing settings.",
+    no_openai: "I'm temporarily unavailable. For general nutrition advice, focus on balanced meals with vegetables, lean proteins, whole grains, and plenty of water.",
+    default: "I'm experiencing technical difficulties. For healthy eating, prioritize whole foods, stay hydrated, and maintain balanced portions. Please try again shortly."
+  };
+
+  return fallbacks[errorCode] || fallbacks.default;
+};
+
+// API Routes
+
+// Health Check
+app.get('/api/health', (req, res) => {
+  const health = {
+    status: 'online',
+    timestamp: new Date().toISOString(),
+    environment: CONFIG.NODE_ENV,
+    openai: {
+      configured: !!CONFIG.OPENAI_API_KEY,
+      initialized: !!openaiClient
+    }
+  };
+
+  const statusCode = openaiClient ? 200 : 503;
+  res.status(statusCode).json(health);
+});
+
+// Chat Endpoint
+app.post('/api/chat', async (req, res) => {
+  const startTime = Date.now();
+
+  try {
+    // Validate request body
+    const { message, chatHistory } = req.body;
+
+    if (!message || typeof message !== 'string' || message.trim().length === 0) {
+      return res.status(400).json({
+        error: 'Invalid request',
+        message: 'Message must be a non-empty string',
+        response: "Please provide a message so I can help you."
       });
     }
 
-    // Build conversation history for context
-    const messages = [
-      { role: 'system', content: ALIVA_SYSTEM_PROMPT },
-      ...chatHistory.slice(-8).map((msg) => ({
-        role: msg.role === 'assistant' ? 'assistant' : 'user',
-        content: msg.content
-      })),
-      { role: 'user', content: message }
-    ];
+    // Check OpenAI availability
+    if (!openaiClient) {
+      console.warn('⚠️ OpenAI client not available');
+      return res.status(503).json({
+        error: 'Service unavailable',
+        response: getFallbackResponse('no_openai')
+      });
+    }
 
-    console.log('🤖 Calling OpenAI API...');
+    // Prepare messages
+    const messages = buildMessages(message, chatHistory || []);
+    
+    console.log(`🤖 Processing chat request (${message.length} chars, ${messages.length} messages)`);
 
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
-      messages: messages,
-      max_tokens: 300,
-      temperature: 0.7,
-      presence_penalty: 0.1,
-      frequency_penalty: 0.1,
+    // Call OpenAI API
+    const completion = await openaiClient.chat.completions.create({
+      model: CONFIG.OPENAI_CONFIG.model,
+      messages,
+      max_tokens: CONFIG.OPENAI_CONFIG.maxTokens,
+      temperature: CONFIG.OPENAI_CONFIG.temperature,
+      presence_penalty: CONFIG.OPENAI_CONFIG.presencePenalty,
+      frequency_penalty: CONFIG.OPENAI_CONFIG.frequencyPenalty,
     });
 
-    const aiResponse = completion.choices[0]?.message?.content || 
-      "I'm here to help with your nutrition questions. Could you tell me more about what you're looking for?";
+    const aiResponse = completion.choices[0]?.message?.content?.trim() || 
+      "I'm here to help with your nutrition questions. Could you tell me more?";
 
-    console.log('✅ OpenAI response received');
-    console.log('📤 Response preview:', aiResponse.substring(0, 100) + '...');
+    const duration = Date.now() - startTime;
+    
+    console.log(`✅ Response generated in ${duration}ms (${completion.usage.total_tokens} tokens)`);
 
-    return res.status(200).json({
+    res.status(200).json({
       response: aiResponse,
-      usage: completion.usage
+      metadata: {
+        tokensUsed: completion.usage.total_tokens,
+        model: completion.model,
+        duration: `${duration}ms`
+      }
     });
 
   } catch (error) {
-    console.error('❌ OpenAI API error:', error);
-    
-    let errorMessage = 'AI service temporarily unavailable';
-    let fallbackResponse = "I'm experiencing technical difficulties right now. For general nutrition advice, focus on whole foods, plenty of vegetables, lean proteins, and staying hydrated. Please try again in a moment.";
+    console.error('❌ Error in /api/chat:', error);
+
+    // Handle specific OpenAI errors
+    let errorCode = 'default';
+    let statusCode = 500;
 
     if (error.code === 'invalid_api_key') {
-      console.log('❌ Invalid API key');
-      errorMessage = 'Invalid API key';
-      fallbackResponse = "There's an API configuration issue. For now, I recommend consulting with a healthcare provider for personalized nutrition advice.";
+      errorCode = 'invalid_api_key';
+      statusCode = 500;
     } else if (error.code === 'rate_limit_exceeded') {
-      console.log('❌ Rate limit exceeded');
-      errorMessage = 'Rate limit exceeded';
-      fallbackResponse = "I'm receiving too many requests right now. Please wait a moment and try again.";
+      errorCode = 'rate_limit_exceeded';
+      statusCode = 429;
     } else if (error.code === 'insufficient_quota') {
-      console.log('❌ Insufficient quota');
-      errorMessage = 'OpenAI quota exceeded';
-      fallbackResponse = "The AI service quota has been exceeded. Please try again later.";
+      errorCode = 'insufficient_quota';
+      statusCode = 402;
     }
-    
-    return res.status(500).json({ 
-      error: errorMessage,
-      fallbackResponse,
-      details: error.message 
+
+    res.status(statusCode).json({
+      error: error.message || 'Internal server error',
+      response: getFallbackResponse(errorCode),
+      ...(CONFIG.NODE_ENV === 'development' && { 
+        details: {
+          code: error.code,
+          type: error.type,
+          message: error.message
+        }
+      })
     });
   }
 });
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-  console.log('🏥 Health check requested');
-  res.json({ 
-    status: 'Server is running!', 
-    timestamp: new Date().toISOString(),
-    openaiConfigured: !!process.env.OPENAI_API_KEY 
+// Root Endpoint
+app.get('/', (req, res) => {
+  res.json({
+    service: 'Aliva API Server',
+    version: '2.0.0',
+    status: 'running',
+    endpoints: {
+      health: 'GET /api/health',
+      chat: 'POST /api/chat'
+    },
+    documentation: 'Visit /api/health for system status'
   });
 });
 
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({ message: 'Aliva API Server is running!' });
+// 404 Handler
+app.use((req, res) => {
+  console.warn(`⚠️ 404: ${req.method} ${req.path}`);
+  res.status(404).json({
+    error: 'Endpoint not found',
+    path: req.path,
+    method: req.method,
+    availableEndpoints: ['GET /', 'GET /api/health', 'POST /api/chat']
+  });
 });
 
-// Error handling middleware
+// Global Error Handler
 app.use((error, req, res, next) => {
   console.error('🔥 Unhandled error:', error);
-  res.status(500).json({ error: 'Internal server error' });
+  res.status(500).json({
+    error: 'Internal server error',
+    message: CONFIG.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+  });
 });
 
-app.listen(port, () => {
-  console.log(`🚀 Server running on http://localhost:${port}`);
-  console.log(`🔑 OpenAI API Key configured: ${!!process.env.OPENAI_API_KEY}`);
-  console.log(`📋 Available endpoints:`);
-  console.log(`   - GET  http://localhost:${port}/api/health`);
-  console.log(`   - POST http://localhost:${port}/api/chat`);
+// Start Server
+const startServer = () => {
+  const isOpenAIReady = initializeOpenAI();
+
+  app.listen(CONFIG.PORT, () => {
+    console.log('\n' + '═'.repeat(60));
+    console.log('🚀  ALIVA API SERVER');
+    console.log('═'.repeat(60));
+    console.log(`📡  Server URL:     http://localhost:${CONFIG.PORT}`);
+    console.log(`🌍  Environment:    ${CONFIG.NODE_ENV}`);
+    console.log(`🔑  OpenAI API Key: ${CONFIG.OPENAI_API_KEY ? '✅ Present' : '❌ Missing'}`);
+    console.log(`🤖  OpenAI Client:  ${isOpenAIReady ? '✅ Ready' : '❌ Not Initialized'}`);
+    console.log('─'.repeat(60));
+    console.log('📋  Endpoints:');
+    console.log(`    GET  http://localhost:${CONFIG.PORT}/`);
+    console.log(`    GET  http://localhost:${CONFIG.PORT}/api/health`);
+    console.log(`    POST http://localhost:${CONFIG.PORT}/api/chat`);
+    console.log('═'.repeat(60) + '\n');
+
+    if (!isOpenAIReady) {
+      console.warn('⚠️  WARNING: Server started but OpenAI is not configured!');
+      console.warn('    The /api/chat endpoint will return fallback responses.\n');
+    }
+  });
+};
+
+// Handle graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('\n🛑 SIGTERM received, shutting down gracefully...');
+  process.exit(0);
 });
+
+process.on('SIGINT', () => {
+  console.log('\n🛑 SIGINT received, shutting down gracefully...');
+  process.exit(0);
+});
+
+// Start the server
+startServer();

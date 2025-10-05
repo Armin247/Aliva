@@ -28,7 +28,7 @@ type RestaurantResult = {
   logo?: string;
 };
 
-const API_URL = '/api/chat';
+const API_URL = 'http://localhost:5000/api/chat';
 
 const LoginChat = () => {
   const navigate = useNavigate();
@@ -100,7 +100,7 @@ const LoginChat = () => {
 
   const quickPrompts = useMemo(
     () => [
-      userProfile ? "Suggest meals for me" : "I have ulcer and my stomach hurts",
+      userProfile ? "Suggest meals for my profile" : "I have ulcer and my stomach hurts",
       userProfile ? "Create a personalized meal plan" : "Suggest a healthy breakfast",
       userProfile ? "What should I eat today?" : "I'm diabetic, what can I eat?",
       "Find restaurants near me",
