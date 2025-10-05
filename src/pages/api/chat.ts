@@ -1,5 +1,5 @@
 import OpenAI from 'openai';
-import type { NextApiRequest, NextApiResponse } from 'next';
+import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -64,7 +64,7 @@ Remember: You're here to guide users toward healthier eating choices while being
 };
 
 // Get location from IP address using request headers
-const getLocationFromRequest = (req: NextApiRequest): { country?: string; city?: string } => {
+const getLocationFromRequest = (req: VercelRequest): { country?: string; city?: string } => {
   // Try various headers that might contain location info
   const country = req.headers['cf-ipcountry'] as string || // Cloudflare
                   req.headers['x-vercel-ip-country'] as string || // Vercel
@@ -102,9 +102,23 @@ interface ResponseData {
 }
 
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<ResponseData>
+  req: VercelRequest,
+  res: VercelResponse<ResponseData>
 ) {
+  // Enable CORS
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+  res.setHeader(
+    'Access-Control-Allow-Headers',
+    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+  );
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
