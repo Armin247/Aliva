@@ -4,9 +4,13 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Bot, Send, Salad, Sparkles, User, AlertCircle, MapPin, RotateCcw, ChefHat } from "lucide-react";
+import { Bot, Send, Salad, Sparkles, User, AlertCircle, MapPin, RotateCcw, ChefHat, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import { profileService } from "@/services/profileService";
+import { UserProfile } from "@/types/profile";
 
 type ChatMessage = {
   role: "user" | "assistant" | "restaurants";
@@ -27,6 +31,8 @@ type RestaurantResult = {
 const API_URL = 'http://localhost:5000/api/chat';
 
 const LoginChat = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [thinking, setThinking] = useState(false);
@@ -39,8 +45,27 @@ const LoginChat = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  
+  // Load user profile from database
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
 
   useEffect(() => {
+    const loadProfile = async () => {
+      if (!user?.uid) return;
+      
+      try {
+        const profile = await profileService.getProfile(user.uid);
+        if (profile) {
+          setUserProfile(profile);
+          console.log('Profile loaded for AI:', profile);
+        }
+      } catch (error) {
+        console.error('Error loading profile:', error);
+      }
+    };
+
+    loadProfile();
+
     setMessages([
       {
         role: "assistant",
@@ -55,12 +80,8 @@ const LoginChat = () => {
             latitude: position.coords.latitude,
             longitude: position.coords.longitude,
           });
-          console.log('📍 User location obtained:', position.coords.latitude, position.coords.longitude);
         },
-        (error) => {
-          console.log('❌ Could not get user location:', error);
-          setError("Please enable location access to find nearby restaurants");
-        }
+        (error) => console.log('Could not get user location:', error)
       );
     }
 
@@ -71,7 +92,7 @@ const LoginChat = () => {
       script.defer = true;
       document.head.appendChild(script);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
@@ -79,18 +100,19 @@ const LoginChat = () => {
 
   const quickPrompts = useMemo(
     () => [
-      "Help me plan a healthy meal",
-      "What should I eat for weight loss?",
-      "Suggest protein-rich foods",
+      userProfile ? "Suggest meals for me" : "I have ulcer and my stomach hurts",
+      userProfile ? "Create a personalized meal plan" : "Suggest a healthy breakfast",
+      userProfile ? "What should I eat today?" : "I'm diabetic, what can I eat?",
       "Find restaurants near me",
     ],
-    []
+    [userProfile]
   );
 
   const actionButtons = useMemo(
     () => [
       { label: "Start new consultation", icon: RotateCcw, action: "new" },
       { label: "Generate a recipe", icon: ChefHat, action: "recipe" },
+      { label: "Edit Profile", icon: Settings, action: "profile" },
     ],
     []
   );
@@ -107,16 +129,70 @@ const LoginChat = () => {
   };
 
   const handleGenerateRecipe = () => {
-    setInput("Generate a healthy recipe based on ingredients I have or suggest a nutritious meal for my condition");
+    setInput("Generate a healthy recipe based on my dietary profile and preferences");
+  };
+
+  const buildProfileContext = (): string => {
+    if (!userProfile) return '';
+    
+    const parts: string[] = [];
+    
+    // Basic info
+    if (userProfile.age) parts.push(`Age: ${userProfile.age} years`);
+    if (userProfile.gender) parts.push(`Gender: ${userProfile.gender}`);
+    
+    // Physical measurements
+    if (userProfile.heightCm && userProfile.currentWeightKg) {
+      parts.push(`Height: ${userProfile.heightCm}cm, Current Weight: ${userProfile.currentWeightKg}kg`);
+    }
+    if (userProfile.targetWeightKg) {
+      parts.push(`Target Weight: ${userProfile.targetWeightKg}kg`);
+    }
+    
+    // Activity and goals
+    if (userProfile.activityLevel) {
+      const activityFormatted = userProfile.activityLevel.replace('_', ' ');
+      parts.push(`Activity Level: ${activityFormatted}`);
+    }
+    
+    if (userProfile.healthGoals && userProfile.healthGoals.length > 0) {
+      parts.push(`Health Goals: ${userProfile.healthGoals.join(', ')}`);
+    }
+    
+    // Dietary preferences and restrictions
+    if (userProfile.dietaryPreferences && userProfile.dietaryPreferences.length > 0) {
+      parts.push(`Dietary Preferences: ${userProfile.dietaryPreferences.join(', ')}`);
+    }
+    
+    // Medical information
+    if (userProfile.allergies && userProfile.allergies.length > 0) {
+      parts.push(`IMPORTANT - Allergies: ${userProfile.allergies.join(', ')} (MUST AVOID)`);
+    }
+    
+    if (userProfile.medicalConditions && userProfile.medicalConditions.length > 0) {
+      parts.push(`Medical Conditions: ${userProfile.medicalConditions.join(', ')}`);
+    }
+    
+    // Lifestyle factors
+    if (userProfile.smokingStatus) {
+      parts.push(`Smoking Status: ${userProfile.smokingStatus}`);
+    }
+    if (userProfile.alcoholFrequency) {
+      parts.push(`Alcohol Consumption: ${userProfile.alcoholFrequency}`);
+    }
+    
+    // Calorie target
+    if (userProfile.preferredCalorieTarget) {
+      parts.push(`Daily Calorie Target: ${userProfile.preferredCalorieTarget} kcal`);
+    }
+    
+    return parts.length > 0 
+      ? `\n\n[User's Health Profile - Use this to personalize all recommendations]:\n${parts.join('\n')}\n[CRITICAL: Avoid all foods listed in allergies. Consider medical conditions when recommending foods.]` 
+      : '';
   };
 
   const initializeMap = () => {
     if (!mapRef.current || !userLocation || !(window as any).google) {
-      console.log('Map initialization failed:', { 
-        hasMapRef: !!mapRef.current, 
-        hasLocation: !!userLocation, 
-        hasGoogle: !!(window as any).google 
-      });
       return;
     }
 
@@ -125,8 +201,6 @@ const LoginChat = () => {
       lat: userLocation.latitude,
       lng: userLocation.longitude
     };
-
-    console.log('Initializing map at:', mapCenter);
 
     const map = new google.maps.Map(mapRef.current, {
       center: mapCenter,
@@ -153,17 +227,6 @@ const LoginChat = () => {
       title: "You are here"
     });
 
-    new google.maps.Circle({
-      strokeColor: "#4F46E5",
-      strokeOpacity: 0.3,
-      strokeWeight: 2,
-      fillColor: "#4F46E5",
-      fillOpacity: 0.1,
-      map: map,
-      center: mapCenter,
-      radius: 100,
-    });
-
     const service = new google.maps.places.PlacesService(map);
     const request = {
       location: mapCenter,
@@ -171,12 +234,7 @@ const LoginChat = () => {
       type: 'restaurant'
     };
 
-    console.log('Searching for restaurants...');
-
     service.nearbySearch(request, (results: any, status: any) => {
-      console.log('Search status:', status);
-      console.log('Results found:', results?.length || 0);
-      
       if (status === google.maps.places.PlacesServiceStatus.OK && results) {
         setMapRestaurants(results);
         
@@ -222,11 +280,8 @@ const LoginChat = () => {
                   <div style="padding: 10px; max-width: 200px;">
                     <h3 style="margin: 0 0 6px 0; font-weight: 600; font-size: 14px;">${place.name}</h3>
                     <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">${place.vicinity}</p>
-                    ${place.rating ? `<p style="margin: 0 0 4px 0; font-size: 12px;">⭐ ${place.rating} (${place.user_ratings_total || 0} reviews)</p>` : ''}
+                    ${place.rating ? `<p style="margin: 0 0 4px 0; font-size: 12px;">⭐ ${place.rating}</p>` : ''}
                     <p style="margin: 0; font-size: 12px; color: #4F46E5; font-weight: 600;">${distance.toFixed(2)} km away</p>
-                    ${place.opening_hours ? `<p style="margin: 4px 0 0 0; font-size: 11px; color: ${place.opening_hours.open_now ? '#10B981' : '#EF4444'};">
-                      ${place.opening_hours.open_now ? '🟢 Open now' : '🔴 Closed'}
-                    </p>` : ''}
                   </div>
                 `
               });
@@ -238,14 +293,6 @@ const LoginChat = () => {
         });
 
         map.fitBounds(bounds);
-        
-        const listener = google.maps.event.addListener(map, "idle", () => {
-          if (map.getZoom() > 16) map.setZoom(16);
-          google.maps.event.removeListener(listener);
-        });
-      } else {
-        console.error('Failed to find restaurants:', status);
-        setError('Could not find restaurants nearby. Please try again.');
       }
     });
   };
@@ -257,25 +304,28 @@ const LoginChat = () => {
     }
     
     if (!(window as any).google) {
-      setError("Google Maps is still loading. Please wait a moment and try again.");
+      setError("Google Maps is still loading. Please wait a moment.");
       return;
     }
     
     setShowMapDialog(true);
     setError(null);
-    setTimeout(() => {
-      initializeMap();
-    }, 300);
+    setTimeout(initializeMap, 300);
   };
 
   const callOpenAI = async (userMessage: string, chatHistory: ChatMessage[]) => {
+    const profileContext = buildProfileContext();
+    const enhancedMessage = profileContext 
+      ? `${userMessage}${profileContext}` 
+      : userMessage;
+
     const response = await fetch(API_URL, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        message: userMessage,
+        message: enhancedMessage,
         chatHistory: chatHistory.map(msg => ({
           role: msg.role,
           content: msg.content
@@ -310,21 +360,8 @@ const LoginChat = () => {
       };
 
       setMessages(prev => [...prev, assistantMsg]);
-
-      if (result.restaurants && result.restaurants.length > 0) {
-        const formattedRestaurants: RestaurantResult[] = result.restaurants.map((r: any) => ({
-          name: r.name,
-          eta: `${Math.round(parseFloat(r.distance) * 2)}-${Math.round(parseFloat(r.distance) * 3)} min`,
-          rating: r.rating,
-          price: r.priceLevel,
-          distanceKm: parseFloat(r.distance),
-          dish: "healthy meal",
-          logo: "🍽️"
-        }));
-        setOpenRestaurants(formattedRestaurants);
-      }
     } catch (error: any) {
-      setError(error.message || "Sorry, I'm having trouble connecting right now. Please try again in a moment.");
+      setError(error.message || "Sorry, I'm having trouble connecting right now.");
     } finally {
       setThinking(false);
     }
@@ -342,7 +379,31 @@ const LoginChat = () => {
             <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary border-primary/20">
               AI Nutritionist
             </Badge>
+            {userProfile && (
+              <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">
+                Profile Active
+              </Badge>
+            )}
           </div>
+
+          {!userProfile && (
+            <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
+                <div className="flex-1 text-sm text-blue-700">
+                  <p className="font-medium mb-1">Get Personalized Recommendations</p>
+                  <p className="text-xs">Complete your health profile to receive tailored nutrition advice based on your goals, allergies, and dietary needs.</p>
+                  <Button 
+                    size="sm" 
+                    className="mt-2 h-7 text-xs" 
+                    onClick={() => navigate('/profile')}
+                  >
+                    Complete Profile
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {error && (
             <div className="mb-3 p-2 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-sm text-red-700">
@@ -462,6 +523,8 @@ const LoginChat = () => {
                         handleStartNewConsultation();
                       } else if (btn.action === "recipe") {
                         handleGenerateRecipe();
+                      } else if (btn.action === "profile") {
+                        navigate('/profile');
                       }
                     }}
                     disabled={thinking}
@@ -475,38 +538,6 @@ const LoginChat = () => {
           </div>
         </div>
       </div>
-
-      <Sheet open={!!openRestaurants} onOpenChange={(v) => !v && setOpenRestaurants(null)}>
-        <SheetContent side="bottom" className="rounded-t-2xl p-4 h-[80vh]">
-          <SheetHeader>
-            <SheetTitle>Recommended Restaurants</SheetTitle>
-          </SheetHeader>
-          <div className="space-y-3 max-h-[60vh] overflow-auto pt-2">
-            {openRestaurants?.map((r, i) => (
-              <div key={i} className="rounded-lg border flex overflow-hidden min-h-[116px] hover:shadow-md transition-shadow">
-                <div className="w-16 bg-primary/5 flex items-center justify-center rounded-l-lg text-2xl">
-                  {r.logo || "🍽️"}
-                </div>
-                <div className="flex-1 p-3 flex items-start justify-between gap-3">
-                  <div>
-                    <div className="font-semibold">{r.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {r.dish} • {r.price} • {r.rating.toFixed(1)}★
-                    </div>
-                    <div className="text-xs text-muted-foreground mt-1">
-                      Healthy options available
-                    </div>
-                  </div>
-                  <div className="text-right text-xs text-muted-foreground">
-                    <div>{r.eta}</div>
-                    <div>{r.distanceKm.toFixed(1)} km</div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </SheetContent>
-      </Sheet>
 
       <Dialog open={showMapDialog} onOpenChange={setShowMapDialog}>
         <DialogContent className="max-w-6xl w-[95vw] h-[85vh] p-0 gap-0">
@@ -546,80 +577,45 @@ const LoginChat = () => {
                         <div 
                           key={index} 
                           className="p-4 border rounded-xl hover:shadow-md hover:border-primary/50 cursor-pointer transition-all bg-white"
+                          onClick={() => {
+                            if (place.geometry?.location && googleMapRef.current) {
+                              googleMapRef.current.panTo(place.geometry.location);
+                              googleMapRef.current.setZoom(17);
+                            }
+                          }}
                         >
-                          <div 
-                            className="flex items-start gap-3"
-                            onClick={() => {
-                              if (place.geometry?.location && googleMapRef.current) {
-                                googleMapRef.current.panTo(place.geometry.location);
-                                googleMapRef.current.setZoom(17);
-                              }
-                            }}
-                          >
-                            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold flex-shrink-0 shadow-sm">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
                               {index + 1}
                             </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="font-semibold text-base mb-1 line-clamp-1">{place.name}</div>
-                              <div className="text-xs text-muted-foreground mb-2 line-clamp-2">{place.vicinity}</div>
-                              
+                            <div className="flex-1">
+                              <div className="font-semibold mb-1">{place.name}</div>
+                              <div className="text-xs text-muted-foreground mb-2">{place.vicinity}</div>
                               {distance > 0 && (
-                                <div className="flex items-center gap-1 text-xs font-medium text-pink-600 mb-1">
+                                <div className="flex items-center gap-1 text-xs text-primary mb-1">
                                   <MapPin className="h-3 w-3" />
                                   {distance.toFixed(2)} km away
                                 </div>
                               )}
-                              
-                              <div className="flex items-center gap-3 flex-wrap">
-                                {place.rating && (
-                                  <div className="flex items-center gap-1 text-xs">
-                                    <span className="text-yellow-500">⭐</span>
-                                    <span className="font-medium">{place.rating}</span>
-                                    {place.user_ratings_total && (
-                                      <span className="text-muted-foreground">({place.user_ratings_total})</span>
-                                    )}
-                                  </div>
-                                )}
-                                
-                                {place.opening_hours && (
-                                  <div className="flex items-center gap-1 text-xs">
-                                    <span className={`w-2 h-2 rounded-full ${place.opening_hours.open_now ? 'bg-green-500' : 'bg-red-500'}`}></span>
-                                    <span className={`font-medium ${place.opening_hours.open_now ? 'text-green-600' : 'text-red-600'}`}>
-                                      {place.opening_hours.open_now ? 'Open now' : 'Closed'}
-                                    </span>
-                                  </div>
-                                )}
-                              </div>
+                              {place.rating && (
+                                <div className="text-xs">
+                                  ⭐ {place.rating}
+                                </div>
+                              )}
                             </div>
                           </div>
-                          
-                          <div className="mt-3 pt-3 border-t flex gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="flex-1 text-xs h-8"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.open(googleMapsUrl, '_blank');
-                              }}
-                            >
-                              <MapPin className="h-3 w-3 mr-1" />
-                              Get Directions
-                            </Button>
-                            {place.place_id && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="text-xs h-8 px-3"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  window.open(`https://www.google.com/maps/place/?q=place_id:${place.place_id}`, '_blank');
-                                }}
-                              >
-                                View Details
-                              </Button>
-                            )}
-                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-full mt-3 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(googleMapsUrl, '_blank');
+                            }}
+                          >
+                            <MapPin className="h-3 w-3 mr-1" />
+                            Get Directions
+                          </Button>
                         </div>
                       );
                     })
