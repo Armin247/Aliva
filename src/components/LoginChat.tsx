@@ -28,7 +28,9 @@ type RestaurantResult = {
   logo?: string;
 };
 
-const API_URL = 'http://localhost:5000/api/chat';
+const API_URL = import.meta.env.DEV 
+  ? 'http://localhost:5000/api/chat' 
+  : '/api/chat';
 
 const LoginChat = () => {
   const navigate = useNavigate();
