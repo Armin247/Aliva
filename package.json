@@ -5,11 +5,11 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "tsc && vite build",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "server": "nodemon server.js",
+    "server": "nodemon server.js && node server.js",
     "start:all": "concurrently \"npm run server\" \"npm run dev\"",
     "start:server": "node server.js"
   },
