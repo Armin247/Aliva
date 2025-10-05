@@ -67,14 +67,14 @@ const Contact = () => {
       icon: Phone,
       title: "Call Us",
       description: "Speak with our support team",
-      contact: "+1 (555) 123-4567",
-      response: "Mon-Fri, 9AM-6PM EST"
+      contact: "+23480 234 567 890",
+      response: "Mon-Fri, 9AM-6PM GMT"
     },
     {
       icon: MapPin,
       title: "Visit Us",
       description: "Come say hello in person",
-      contact: "123 Health Street, San Francisco, CA",
+      contact: "123 Health Street, Ikoyi, LA",
       response: "By appointment only"
     }
   ];

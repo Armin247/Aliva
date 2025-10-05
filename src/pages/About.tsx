@@ -4,8 +4,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Heart, Target, Shield, Users, Lightbulb, Award, TrendingUp, Globe, Zap, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const About = () => {
+  const navigate = useNavigate();
+  
   const values = [
     {
       icon: Heart,
@@ -83,19 +86,19 @@ const About = () => {
   ];
 
   return (
-    <div className="min-h-screen flex flex-col bg-gradient-to-br from-slate-50 via-white to-purple-50/30">
+    <div className="min-h-screen flex flex-col bg-gradient-to-br from-green-50 via-white to-purple-50/30">
       <Navigation />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-transparent to-pink-500/10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 via-transparent to-purple-500/10"></div>
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
             <div className="text-center max-w-4xl mx-auto">
-              <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
+              <div className="inline-flex items-center gap-2 bg-gradient-to-r from-green-100 to-purple-100 text-green-800 px-4 py-2 rounded-full text-sm font-medium mb-6">
                 <Heart className="w-4 h-4" />
                 About Our Mission
               </div>
-              <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-gray-900 via-purple-800 to-gray-900 bg-clip-text text-transparent">
+              <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 bg-gradient-to-r from-green-600 via-purple-600 to-green-600 bg-clip-text text-transparent">
                 About Aliva
               </h1>
               <p className="text-xl text-gray-600 leading-relaxed mb-8">
@@ -104,11 +107,11 @@ const About = () => {
                 and build lasting habits—without friction.
               </p>
               <div className="flex flex-wrap justify-center gap-4">
-                <Badge variant="secondary" className="px-4 py-2">
+                <Badge variant="secondary" className="px-4 py-2 bg-green-100 text-green-800">
                   <Award className="w-4 h-4 mr-2" />
                   AI-Powered
                 </Badge>
-                <Badge variant="outline" className="px-4 py-2">
+                <Badge variant="outline" className="px-4 py-2 border-purple-200 text-purple-700">
                   <Shield className="w-4 h-4 mr-2" />
                   Privacy-First
                 </Badge>
@@ -118,12 +121,12 @@ const About = () => {
         </section>
 
         {/* Stats Section */}
-        <section className="py-16 bg-white/50">
+        <section className="py-16 bg-gradient-to-r from-green-50/50 to-purple-50/50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
               {stats.map((stat, index) => (
                 <div key={index} className="text-center">
-                  <div className="text-4xl md:text-5xl font-bold text-purple-600 mb-2">
+                  <div className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-green-600 to-purple-600 bg-clip-text text-transparent mb-2">
                     {stat.number}
                   </div>
                   <div className="text-gray-600 font-medium">{stat.label}</div>
@@ -167,11 +170,20 @@ const About = () => {
                     </div>
                   </div>
                 </div>
+                <div className="mt-8">
+                  <Button 
+                    onClick={() => navigate('/privacy')}
+                    variant="outline" 
+                    className="border-green-200 text-green-700 hover:bg-green-50"
+                  >
+                    Learn About Our Privacy Policy
+                  </Button>
+                </div>
               </div>
               <div className="relative">
-                <div className="bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl p-8">
+                <div className="bg-gradient-to-br from-green-100 to-purple-100 rounded-2xl p-8">
                   <div className="text-center">
-                    <div className="w-24 h-24 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <div className="w-24 h-24 bg-gradient-to-br from-green-500 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-6">
                       <Heart className="w-12 h-12 text-white" />
                     </div>
                     <h3 className="text-2xl font-bold text-gray-900 mb-4">Making Health Accessible</h3>
@@ -187,10 +199,10 @@ const About = () => {
         </section>
 
         {/* Values Section */}
-        <section className="py-20 bg-gray-50/50">
+        <section className="py-20 bg-gradient-to-r from-green-50/30 to-purple-50/30">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4">Our Values</h2>
+              <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-600 to-purple-600 bg-clip-text text-transparent">Our Values</h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 These principles guide everything we do, from product development to user support.
               </p>
@@ -199,8 +211,8 @@ const About = () => {
               {values.map((value, index) => (
                 <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
                   <CardContent className="p-8 text-center">
-                    <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                      <value.icon className="w-8 h-8 text-purple-600" />
+                    <div className="w-16 h-16 bg-gradient-to-br from-green-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <value.icon className="w-8 h-8 text-green-600" />
                     </div>
                     <h3 className="text-xl font-bold mb-4">{value.title}</h3>
                     <p className="text-gray-600">{value.description}</p>
@@ -215,7 +227,7 @@ const About = () => {
         <section className="py-20">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4">What We're Building</h2>
+              <h2 className="text-4xl font-bold mb-4 bg-gradient-to-r from-green-600 to-purple-600 bg-clip-text text-transparent">What We're Building</h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
                 The modern nutrition companion for everyday life, powered by AI and human expertise.
               </p>
@@ -225,8 +237,8 @@ const About = () => {
                 <Card key={index} className="border-0 shadow-lg">
                   <CardContent className="p-8">
                     <div className="flex items-start gap-4">
-                      <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <feature.icon className="w-6 h-6 text-purple-600" />
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-100 to-purple-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <feature.icon className="w-6 h-6 text-green-600" />
                       </div>
                       <div>
                         <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
@@ -237,51 +249,43 @@ const About = () => {
           </Card>
               ))}
             </div>
+            <div className="text-center mt-12">
+              <Button 
+                onClick={() => navigate('/dashboard')}
+                size="lg"
+                className="bg-gradient-to-r from-green-600 to-purple-600 hover:from-green-700 hover:to-purple-700 text-white"
+              >
+                Explore Our Features
+              </Button>
+            </div>
           </div>
         </section>
 
-        {/* Team Section */}
-        <section className="py-20 bg-gray-50/50">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl font-bold mb-4">Meet Our Team</h2>
-              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Passionate experts working together to revolutionize how people approach nutrition and health.
-              </p>
-            </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-              {team.map((member, index) => (
-                <Card key={index} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
-                  <CardContent className="p-6 text-center">
-                    <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <span className="text-2xl font-bold text-white">
-                        {member.name.split(' ').map(n => n[0]).join('')}
-                      </span>
-                    </div>
-                    <h3 className="text-lg font-bold mb-1">{member.name}</h3>
-                    <p className="text-purple-600 font-medium mb-3">{member.role}</p>
-                    <p className="text-sm text-gray-600">{member.bio}</p>
-            </CardContent>
-          </Card>
-              ))}
-            </div>
-          </div>
-        </section>
 
         {/* CTA Section */}
         <section className="py-20">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <Card className="border-0 shadow-2xl bg-gradient-to-br from-purple-600 to-pink-600 text-white">
+            <Card className="border-0 shadow-2xl bg-gradient-to-br from-green-600 to-purple-600 text-white">
               <CardContent className="p-12">
                 <h2 className="text-4xl font-bold mb-6">Ready to Transform Your Nutrition?</h2>
                 <p className="text-xl mb-8 opacity-90">
                   Join thousands of users who are already making healthier choices with Aliva's AI-powered guidance.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button size="lg" variant="secondary" className="bg-white text-purple-600 hover:bg-gray-100">
+                  <Button 
+                    size="lg" 
+                    variant="secondary" 
+                    className="bg-white text-green-600 hover:bg-gray-100"
+                    onClick={() => navigate('/auth')}
+                  >
                     Get Started Free
                   </Button>
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white hover:text-purple-600">
+                  <Button 
+                    size="lg" 
+                    variant="outline" 
+                    className="border-white text-white hover:bg-white hover:text-green-600"
+                    onClick={() => navigate('/contact')}
+                  >
                     Learn More
                   </Button>
                 </div>
