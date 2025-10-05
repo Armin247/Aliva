@@ -1,5 +1,4 @@
 import OpenAI from 'openai';
-import type { VercelRequest, VercelResponse } from '@vercel/node';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -64,7 +63,7 @@ Remember: You're here to guide users toward healthier eating choices while being
 };
 
 // Get location from IP address using request headers
-const getLocationFromRequest = (req: VercelRequest): { country?: string; city?: string } => {
+const getLocationFromRequest = (req: any): { country?: string; city?: string } => {
   // Try various headers that might contain location info
   const country = req.headers['cf-ipcountry'] as string || // Cloudflare
                   req.headers['x-vercel-ip-country'] as string || // Vercel
@@ -101,10 +100,7 @@ interface ResponseData {
   };
 }
 
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse<ResponseData>
-) {
+export default async function handler(req: any, res: any) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');

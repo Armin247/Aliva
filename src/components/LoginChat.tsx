@@ -32,6 +32,9 @@ const API_URL = import.meta.env.DEV
   ? 'http://localhost:5000/api/chat' 
   : '/api/chat';
 
+// Fallback API URL for production
+const FALLBACK_API_URL = 'https://your-vercel-app.vercel.app/api/chat';
+
 const LoginChat = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -315,32 +318,55 @@ const LoginChat = () => {
     setTimeout(initializeMap, 300);
   };
 
-  const callOpenAI = async (userMessage: string, chatHistory: ChatMessage[]) => {
+  const callOpenAI = async (userMessage: string, chatHistory: ChatMessage[], useFallback = false) => {
     const profileContext = buildProfileContext();
     const enhancedMessage = profileContext 
       ? `${userMessage}${profileContext}` 
       : userMessage;
 
-    const response = await fetch(API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        message: enhancedMessage,
-        chatHistory: chatHistory.map(msg => ({
-          role: msg.role,
-          content: msg.content
-        }))
-      }),
-    });
+    const url = useFallback ? FALLBACK_API_URL : API_URL;
+    console.log('Making API call to:', url);
+    console.log('Environment:', import.meta.env.DEV ? 'development' : 'production');
+    console.log('Using fallback:', useFallback);
 
-    if (!response.ok) {
-      throw new Error('AI connectivity error');
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: enhancedMessage,
+          chatHistory: chatHistory.map(msg => ({
+            role: msg.role,
+            content: msg.content
+          }))
+        }),
+      });
+
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('API Error Response:', errorText);
+        throw new Error(`API Error: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('API Response:', data);
+      return { response: data.response, restaurants: [] };
+    } catch (error) {
+      console.error('Fetch error details:', error);
+      
+      // If this is the first attempt and we're in production, try the fallback
+      if (!useFallback && !import.meta.env.DEV) {
+        console.log('Trying fallback URL...');
+        return callOpenAI(userMessage, chatHistory, true);
+      }
+      
+      throw error;
     }
-
-    const data = await response.json();
-    return { response: data.response, restaurants: [] };
   };
 
   const handleSend = async () => {
