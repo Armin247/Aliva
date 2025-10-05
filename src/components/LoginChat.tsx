@@ -100,8 +100,18 @@ const LoginChat = () => {
   }, [user]);
 
   useEffect(() => {
-    listRef.current?.scrollTo({ top: listRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages]);
+    // Use setTimeout to ensure DOM is updated before scrolling
+    setTimeout(() => {
+      if (listRef.current) {
+        // Try multiple scroll methods for better compatibility
+        listRef.current.scrollTop = listRef.current.scrollHeight;
+        listRef.current.scrollTo({ 
+          top: listRef.current.scrollHeight, 
+          behavior: "smooth" 
+        });
+      }
+    }, 100);
+  }, [messages, thinking]);
 
   const quickPrompts = useMemo(
     () => [
@@ -369,6 +379,19 @@ const LoginChat = () => {
     }
   };
 
+  const scrollToBottom = () => {
+    setTimeout(() => {
+      if (listRef.current) {
+        // Try multiple scroll methods for better compatibility
+        listRef.current.scrollTop = listRef.current.scrollHeight;
+        listRef.current.scrollTo({ 
+          top: listRef.current.scrollHeight, 
+          behavior: "smooth" 
+        });
+      }
+    }, 100);
+  };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || thinking) return;
@@ -379,6 +402,9 @@ const LoginChat = () => {
     setThinking(true);
     setError(null);
 
+    // Scroll after user message
+    scrollToBottom();
+
     try {
       const result = await callOpenAI(text, messages);
 
@@ -388,6 +414,9 @@ const LoginChat = () => {
       };
 
       setMessages(prev => [...prev, assistantMsg]);
+      
+      // Scroll after AI response
+      scrollToBottom();
     } catch (error: any) {
       setError(error.message || "Sorry, I'm having trouble connecting right now.");
     } finally {
