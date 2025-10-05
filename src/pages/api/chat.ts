@@ -5,7 +5,24 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const getLocationAwarePrompt = (location?: string) => {
+// Helper function to get country-specific food context
+const getCountryContext = (country: string) => {
+  const countryContexts: Record<string, string> = {
+    'Nigeria': 'Nigerian staples like jollof rice, plantains, beans, yams, egusi soup, fish, palm oil, vegetables like ugu and ewedu',
+    'Ghana': 'Ghanaian foods like banku, fufu, kenkey, groundnut soup, kontomire, red red, tilapia',
+    'Kenya': 'Kenyan staples like ugali, sukuma wiki, nyama choma, githeri, chapati, beans, maize',
+    'South Africa': 'South African foods like bobotie, biltong, boerewors, pap, chakalaka, samp and beans',
+    'United States': 'American foods available in grocery stores, farmers markets, and common restaurant options',
+    'United Kingdom': 'British foods and produce available in supermarkets and local markets',
+    'India': 'Indian staples like dal, roti, rice, sabzi, paneer, lentils, chickpeas, regional curries',
+    'Mexico': 'Mexican foods like beans, corn tortillas, nopales, chiles, fresh produce, traditional dishes',
+    // Add more countries as needed
+  };
+  
+  return countryContexts[country] || 'locally available fresh produce, proteins, and whole grains';
+};
+
+const getLocationAwarePrompt = (country?: string, city?: string) => {
   const basePrompt = `You are Aliva, a professional AI nutritionist and medical practitioner specializing in dietary guidance and health recommendations. You provide evidence-based, compassionate, and personalized nutrition advice.
 
 Key characteristics:
@@ -17,15 +34,18 @@ Key characteristics:
 - Focus on whole foods, balanced nutrition, and sustainable eating habits
 - Be empathetic to users' challenges and preferences`;
 
-  const locationContext = location 
-    ? `\n\nUser Location: ${location}
+  const locationContext = country 
+    ? `\n\nUser Location: ${city ? `${city}, ` : ''}${country}
+
 When making food recommendations:
-- Suggest locally available and culturally appropriate foods from this region
-- Recommend seasonal produce common in this area
-- Consider local cuisine and eating habits
-- Mention local dishes or ingredients that align with healthy eating
-- Suggest where they might find these foods locally (markets, grocery stores, etc.)
-- Be aware of regional food availability and preferences`
+- Prioritize foods commonly available in ${country}: ${getCountryContext(country)}
+- Suggest locally sourced and culturally appropriate foods
+- Recommend seasonal produce common in this region
+- Consider local cuisine and eating habits when possible
+- Mention local dishes that can be made healthier or align with nutritional goals
+- Use familiar local ingredients in your suggestions
+- Reference local markets, grocery stores, or food vendors where appropriate
+- Be culturally sensitive and aware of regional preferences`
     : '';
 
   const guidelines = `\n\nGuidelines for responses:
@@ -43,6 +63,19 @@ Remember: You're here to guide users toward healthier eating choices while being
   return basePrompt + locationContext + guidelines;
 };
 
+// Get location from IP address using request headers
+const getLocationFromRequest = (req: NextApiRequest): { country?: string; city?: string } => {
+  // Try various headers that might contain location info
+  const country = req.headers['cf-ipcountry'] as string || // Cloudflare
+                  req.headers['x-vercel-ip-country'] as string || // Vercel
+                  req.headers['x-country-code'] as string; // Generic
+  
+  const city = req.headers['x-vercel-ip-city'] as string || // Vercel
+               req.headers['cf-ipcity'] as string; // Cloudflare
+  
+  return { country, city };
+};
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -51,7 +84,10 @@ interface ChatMessage {
 interface RequestBody {
   message: string;
   chatHistory?: ChatMessage[];
-  location?: string; // e.g., "Lagos, Nigeria" or "New York, USA"
+  location?: {
+    country?: string;
+    city?: string;
+  };
 }
 
 interface ResponseData {
@@ -59,6 +95,10 @@ interface ResponseData {
   usage?: any;
   error?: string;
   fallbackResponse?: string;
+  detectedLocation?: {
+    country?: string;
+    city?: string;
+  };
 }
 
 export default async function handler(
@@ -85,9 +125,18 @@ export default async function handler(
       });
     }
 
+    // Use provided location or detect from request headers
+    const detectedLocation = getLocationFromRequest(req);
+    const finalLocation = {
+      country: location?.country || detectedLocation.country,
+      city: location?.city || detectedLocation.city
+    };
+
+    console.log('Using location:', finalLocation);
+
     // Build conversation history for context with location-aware prompt
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: 'system', content: getLocationAwarePrompt(location) },
+      { role: 'system', content: getLocationAwarePrompt(finalLocation.country, finalLocation.city) },
       ...chatHistory.map((msg) => ({
         role: msg.role === 'assistant' ? 'assistant' as const : 'user' as const,
         content: msg.content
@@ -109,7 +158,8 @@ export default async function handler(
 
     return res.status(200).json({ 
       response: aiResponse,
-      usage: completion.usage 
+      usage: completion.usage,
+      detectedLocation: finalLocation // Return location so client knows what was detected
     });
 
   } catch (error: any) {
