@@ -5,7 +5,8 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const ALIVA_SYSTEM_PROMPT = `You are Aliva, a professional AI nutritionist and medical practitioner specializing in dietary guidance and health recommendations. You provide evidence-based, compassionate, and personalized nutrition advice.
+const getLocationAwarePrompt = (location?: string) => {
+  const basePrompt = `You are Aliva, a professional AI nutritionist and medical practitioner specializing in dietary guidance and health recommendations. You provide evidence-based, compassionate, and personalized nutrition advice.
 
 Key characteristics:
 - Professional yet approachable tone
@@ -14,12 +15,23 @@ Key characteristics:
 - Consider medical conditions when giving advice
 - Encourage users to consult healthcare providers for serious conditions
 - Focus on whole foods, balanced nutrition, and sustainable eating habits
-- Be empathetic to users' challenges and preferences
+- Be empathetic to users' challenges and preferences`;
 
-Guidelines for responses:
+  const locationContext = location 
+    ? `\n\nUser Location: ${location}
+When making food recommendations:
+- Suggest locally available and culturally appropriate foods from this region
+- Recommend seasonal produce common in this area
+- Consider local cuisine and eating habits
+- Mention local dishes or ingredients that align with healthy eating
+- Suggest where they might find these foods locally (markets, grocery stores, etc.)
+- Be aware of regional food availability and preferences`
+    : '';
+
+  const guidelines = `\n\nGuidelines for responses:
 - Keep responses concise but informative (2-4 sentences typically)
 - Always acknowledge the user's condition or concern
-- Provide specific food recommendations when appropriate
+- Provide specific food recommendations when appropriate, prioritizing locally available options
 - Mention portion sizes or preparation methods when relevant
 - If a user mentions serious symptoms, gently suggest consulting a doctor
 - End with an encouraging or supportive statement when appropriate
@@ -27,6 +39,9 @@ Guidelines for responses:
 When users ask about restaurant searches or want to find places to eat, respond positively and suggest they can say "find restaurants" to see nearby options that align with your recommendations.
 
 Remember: You're here to guide users toward healthier eating choices while being understanding of their current situation and preferences.`;
+
+  return basePrompt + locationContext + guidelines;
+};
 
 interface ChatMessage {
   role: 'user' | 'assistant';
@@ -36,6 +51,7 @@ interface ChatMessage {
 interface RequestBody {
   message: string;
   chatHistory?: ChatMessage[];
+  location?: string; // e.g., "Lagos, Nigeria" or "New York, USA"
 }
 
 interface ResponseData {
@@ -54,7 +70,7 @@ export default async function handler(
   }
 
   try {
-    const { message, chatHistory = [] } = req.body as RequestBody;
+    const { message, chatHistory = [], location } = req.body as RequestBody;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
@@ -69,9 +85,9 @@ export default async function handler(
       });
     }
 
-    // Build conversation history for context
+    // Build conversation history for context with location-aware prompt
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-      { role: 'system', content: ALIVA_SYSTEM_PROMPT },
+      { role: 'system', content: getLocationAwarePrompt(location) },
       ...chatHistory.map((msg) => ({
         role: msg.role === 'assistant' ? 'assistant' as const : 'user' as const,
         content: msg.content
