@@ -67,7 +67,7 @@ const Contact = () => {
       icon: Phone,
       title: "Call Us",
       description: "Speak with our support team",
-      contact: "+23480 234 567 890",
+      contact: "+2348023480890",
       response: "Mon-Fri, 9AM-6PM GMT"
     },
     {
