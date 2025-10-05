@@ -1,5 +1,5 @@
-// api/chat.ts or pages/api/chat.ts (depending on your setup)
 import OpenAI from 'openai';
+import type { NextApiRequest, NextApiResponse } from 'next';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -28,31 +28,60 @@ When users ask about restaurant searches or want to find places to eat, respond 
 
 Remember: You're here to guide users toward healthier eating choices while being understanding of their current situation and preferences.`;
 
-export default async function handler(req: any, res: any) {
+interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+interface RequestBody {
+  message: string;
+  chatHistory?: ChatMessage[];
+}
+
+interface ResponseData {
+  response?: string;
+  usage?: any;
+  error?: string;
+  fallbackResponse?: string;
+}
+
+export default async function handler(
+  req: NextApiRequest,
+  res: NextApiResponse<ResponseData>
+) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
   try {
-    const { message, chatHistory = [] } = req.body;
+    const { message, chatHistory = [] } = req.body as RequestBody;
 
     if (!message) {
       return res.status(400).json({ error: 'Message is required' });
     }
 
+    // Verify API key is configured
+    if (!process.env.OPENAI_API_KEY) {
+      console.error('OPENAI_API_KEY is not configured');
+      return res.status(500).json({ 
+        error: 'AI service not configured',
+        fallbackResponse: "The AI service is not properly configured. Please contact support."
+      });
+    }
+
     // Build conversation history for context
-    const messages = [
+    const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
       { role: 'system', content: ALIVA_SYSTEM_PROMPT },
-      ...chatHistory.map((msg: any) => ({
-        role: msg.role === 'assistant' ? 'assistant' : 'user',
+      ...chatHistory.map((msg) => ({
+        role: msg.role === 'assistant' ? 'assistant' as const : 'user' as const,
         content: msg.content
       })),
       { role: 'user', content: message }
     ];
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini', // or 'gpt-4' if you prefer
-      messages: messages as any,
+      model: 'gpt-4o-mini',
+      messages: messages,
       max_tokens: 300,
       temperature: 0.7,
       presence_penalty: 0.1,
@@ -70,11 +99,20 @@ export default async function handler(req: any, res: any) {
   } catch (error: any) {
     console.error('OpenAI API error:', error);
     
-    // Fallback response in case of API issues
+    // More specific error messages
+    let errorMessage = 'AI service temporarily unavailable';
+    if (error?.code === 'invalid_api_key') {
+      errorMessage = 'AI service authentication failed';
+      console.error('Invalid OpenAI API key');
+    } else if (error?.code === 'insufficient_quota') {
+      errorMessage = 'AI service quota exceeded';
+      console.error('OpenAI quota exceeded');
+    }
+    
     const fallbackResponse = "I'm experiencing some technical difficulties right now. In the meantime, I'd recommend focusing on whole foods, plenty of vegetables, lean proteins, and staying hydrated. Please try again in a moment.";
     
     return res.status(500).json({ 
-      error: 'AI service temporarily unavailable',
+      error: errorMessage,
       fallbackResponse 
     });
   }

@@ -274,8 +274,7 @@ const LoginChat = () => {
   };
 
   const callOpenAI = async (userMessage: string, chatHistory: ChatMessage[]) => {
-    const response = await fetch('http://localhost:5000/api/chat', {
-      method: 'POST',
+    const response = await fetch('/api/chat', {      method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
