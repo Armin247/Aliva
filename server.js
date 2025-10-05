@@ -12,11 +12,10 @@ const port = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:8082', 'http://localhost:5173', 'http://localhost:3000'],
+  origin: ['http://localhost:8080', 'http://localhost:5173', 'http://localhost:3000', process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '*'],
   methods: ['GET', 'POST'],
   credentials: true
 }));
-app.use(express.json());
 
 // Initialize OpenAI
 let openai;
