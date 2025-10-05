@@ -100,9 +100,9 @@ const LoginChat = () => {
 
   const quickPrompts = useMemo(
     () => [
-      userProfile ? "Suggest meals for my profile" : "I have ulcer and my stomach hurts",
-      userProfile ? "Create a personalized meal plan" : "Suggest a healthy breakfast",
-      userProfile ? "What should I eat today?" : "I'm diabetic, what can I eat?",
+      userProfile ? "Suggest meals for me" : "Suggest meals for me",
+      userProfile ? "Create a personalized meal plan" : "Create a personalized meal plan",
+      userProfile ? "What should I eat today?" : "What should I eat today?",
       "Find restaurants near me",
     ],
     [userProfile]
@@ -334,7 +334,7 @@ const LoginChat = () => {
     });
 
     if (!response.ok) {
-      throw new Error('Failed to get response from AI');
+      throw new Error('AI connectivity error');
     }
 
     const data = await response.json();
