@@ -188,9 +188,9 @@ const Contact = () => {
                   </CardTitle>
                   <CardDescription className="text-lg">
                     Fill out the form below and we'll get back to you as soon as possible.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="space-y-2">
@@ -284,11 +284,11 @@ const Contact = () => {
                       <div className="text-sm text-gray-500">
                         <CheckCircle className="w-4 h-4 inline mr-1" />
                         We'll respond within 24 hours
-                      </div>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
+                </div>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
             </div>
           </div>
         </div>

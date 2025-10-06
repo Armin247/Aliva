@@ -119,6 +119,8 @@ const LoginChat = () => {
       userProfile ? "Create a personalized meal plan" : "Create a personalized meal plan",
       userProfile ? "What should I eat today?" : "What should I eat today?",
       "Find restaurants near me",
+      "Suggest local recipes",
+      "What's in season here?",
     ],
     [userProfile]
   );
@@ -223,30 +225,68 @@ const LoginChat = () => {
       mapTypeControl: true,
       fullscreenControl: true,
       streetViewControl: true,
+      styles: [
+        {
+          featureType: "poi",
+          elementType: "labels",
+          stylers: [{ visibility: "on" }]
+        }
+      ]
     });
 
     googleMapRef.current = map;
 
+    // Add user location marker with better styling
     new google.maps.Marker({
       position: mapCenter,
       map: map,
       animation: google.maps.Animation.DROP,
       icon: {
         path: google.maps.SymbolPath.CIRCLE,
-        scale: 10,
-        fillColor: "#4F46E5",
+        scale: 12,
+        fillColor: "#10B981",
         fillOpacity: 1,
         strokeColor: "#fff",
         strokeWeight: 3,
       },
-      title: "You are here"
+      title: "Your Location",
+      zIndex: 1000
     });
+
+    // Add info window for user location
+    const userInfoWindow = new google.maps.InfoWindow({
+      content: `
+        <div style="padding: 8px; text-align: center;">
+          <div style="font-weight: 600; color: #10B981; margin-bottom: 4px;">📍 You are here</div>
+          <div style="font-size: 12px; color: #666;">
+            ${userLocation.latitude.toFixed(4)}, ${userLocation.longitude.toFixed(4)}
+          </div>
+        </div>
+      `
+    });
+
+    // Show user location info window initially
+    setTimeout(() => {
+      userInfoWindow.open(map, new google.maps.Marker({
+        position: mapCenter,
+        map: map,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 12,
+          fillColor: "#10B981",
+          fillOpacity: 1,
+          strokeColor: "#fff",
+          strokeWeight: 3,
+        }
+      }));
+    }, 1000);
 
     const service = new google.maps.places.PlacesService(map);
     const request = {
       location: mapCenter,
       radius: 5000,
-      type: 'restaurant'
+      type: 'restaurant',
+      keyword: 'healthy food'
     };
 
     service.nearbySearch(request, (results: any, status: any) => {
@@ -280,7 +320,7 @@ const LoginChat = () => {
               icon: {
                 path: google.maps.SymbolPath.CIRCLE,
                 scale: 14,
-                fillColor: "#10B981",
+                fillColor: place.rating && place.rating >= 4 ? "#10B981" : "#F59E0B",
                 fillOpacity: 0.9,
                 strokeColor: "#fff",
                 strokeWeight: 2,
@@ -292,11 +332,12 @@ const LoginChat = () => {
             marker.addListener('click', () => {
               const infoWindow = new google.maps.InfoWindow({
                 content: `
-                  <div style="padding: 10px; max-width: 200px;">
-                    <h3 style="margin: 0 0 6px 0; font-weight: 600; font-size: 14px;">${place.name}</h3>
+                  <div style="padding: 12px; max-width: 220px;">
+                    <h3 style="margin: 0 0 6px 0; font-weight: 600; font-size: 14px; color: #1F2937;">${place.name}</h3>
                     <p style="margin: 0 0 4px 0; font-size: 12px; color: #666;">${place.vicinity}</p>
-                    ${place.rating ? `<p style="margin: 0 0 4px 0; font-size: 12px;">⭐ ${place.rating}</p>` : ''}
-                    <p style="margin: 0; font-size: 12px; color: #4F46E5; font-weight: 600;">${distance.toFixed(2)} km away</p>
+                    ${place.rating ? `<p style="margin: 0 0 4px 0; font-size: 12px; color: #F59E0B;">⭐ ${place.rating}${place.user_ratings_total ? ` (${place.user_ratings_total} reviews)` : ''}</p>` : ''}
+                    <p style="margin: 0 0 6px 0; font-size: 12px; color: #10B981; font-weight: 600;">📍 ${distance.toFixed(2)} km away</p>
+                    ${place.price_level ? `<p style="margin: 0; font-size: 11px; color: #6B7280;">💰 ${'$'.repeat(place.price_level)}</p>` : ''}
                   </div>
                 `
               });
@@ -338,6 +379,7 @@ const LoginChat = () => {
     console.log('Making API call to:', url);
     console.log('Environment:', import.meta.env.DEV ? 'development' : 'production');
     console.log('Using fallback:', useFallback);
+    console.log('User location:', userLocation);
 
     try {
       const response = await fetch(url, {
@@ -350,7 +392,11 @@ const LoginChat = () => {
           chatHistory: chatHistory.map(msg => ({
             role: msg.role,
             content: msg.content
-          }))
+          })),
+          location: userLocation ? {
+            latitude: userLocation.latitude,
+            longitude: userLocation.longitude
+          } : undefined
         }),
       });
 
@@ -439,6 +485,12 @@ const LoginChat = () => {
             {userProfile && (
               <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">
                 Profile Active
+              </Badge>
+            )}
+            {userLocation && (
+              <Badge variant="outline" className="border-blue-300 text-blue-700 bg-blue-50">
+                <MapPin className="h-3 w-3 mr-1" />
+                Location Active
               </Badge>
             )}
           </div>
@@ -535,6 +587,10 @@ const LoginChat = () => {
                   onClick={() => {
                     if (q === "Find restaurants near me") {
                       handleFindRestaurants();
+                    } else if (q === "Suggest local recipes") {
+                      setInput("Suggest some healthy local recipes based on my location and dietary preferences");
+                    } else if (q === "What's in season here?") {
+                      setInput("What fruits and vegetables are in season in my area right now?");
                     } else {
                       setInput(q);
                     }
@@ -642,21 +698,46 @@ const LoginChat = () => {
                           }}
                         >
                           <div className="flex items-start gap-3">
-                            <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-sm font-bold">
+                            <div className={`w-8 h-8 rounded-full text-white flex items-center justify-center text-sm font-bold ${
+                              place.rating && place.rating >= 4 ? 'bg-green-500' : 'bg-amber-500'
+                            }`}>
                               {index + 1}
                             </div>
                             <div className="flex-1">
                               <div className="font-semibold mb-1">{place.name}</div>
                               <div className="text-xs text-muted-foreground mb-2">{place.vicinity}</div>
-                              {distance > 0 && (
-                                <div className="flex items-center gap-1 text-xs text-primary mb-1">
-                                  <MapPin className="h-3 w-3" />
-                                  {distance.toFixed(2)} km away
-                                </div>
-                              )}
-                              {place.rating && (
-                                <div className="text-xs">
-                                  ⭐ {place.rating}
+                              <div className="flex items-center gap-3 text-xs mb-2">
+                                {distance > 0 && (
+                                  <div className="flex items-center gap-1 text-primary">
+                                    <MapPin className="h-3 w-3" />
+                                    {distance.toFixed(2)} km
+                                  </div>
+                                )}
+                                {place.rating && (
+                                  <div className="flex items-center gap-1 text-amber-600">
+                                    <span>⭐</span>
+                                    <span>{place.rating}</span>
+                                    {place.user_ratings_total && (
+                                      <span className="text-gray-500">({place.user_ratings_total})</span>
+                                    )}
+                                  </div>
+                                )}
+                                {place.price_level && (
+                                  <div className="text-gray-600">
+                                    {Array(place.price_level).fill('$').join('')}
+                                  </div>
+                                )}
+                              </div>
+                              {place.types && place.types.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                  {place.types.slice(0, 3).map((type: string, typeIndex: number) => (
+                                    <span 
+                                      key={typeIndex}
+                                      className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-full"
+                                    >
+                                      {type.replace(/_/g, ' ')}
+                                    </span>
+                                  ))}
                                 </div>
                               )}
                             </div>

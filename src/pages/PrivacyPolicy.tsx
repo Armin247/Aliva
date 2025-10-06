@@ -194,7 +194,7 @@ const PrivacyPolicy = () => {
                 {activeSection === "sharing" && (
                   <div className="space-y-6">
                     <Card className="border-0 shadow-lg">
-                      <CardHeader>
+                <CardHeader>
                         <CardTitle className="text-2xl flex items-center gap-3">
                           <Lock className="w-6 h-6 text-primary" />
                           Data Sharing & Security
@@ -202,7 +202,7 @@ const PrivacyPolicy = () => {
                         <CardDescription>
                           We never sell your data and only share it when absolutely necessary.
                         </CardDescription>
-                      </CardHeader>
+                </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="p-6 bg-red-50 border border-red-200 rounded-lg">
                           <h4 className="font-semibold text-red-800 mb-2">We Never Sell Your Data</h4>
@@ -223,10 +223,10 @@ const PrivacyPolicy = () => {
                               <span className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></span>
                               You explicitly consent to sharing
                             </li>
-                          </ul>
+                  </ul>
                         </div>
-                      </CardContent>
-                    </Card>
+                </CardContent>
+              </Card>
                   </div>
                 )}
 
@@ -234,7 +234,7 @@ const PrivacyPolicy = () => {
                 {activeSection === "rights" && (
                   <div className="space-y-6">
                     <Card className="border-0 shadow-lg">
-                      <CardHeader>
+                <CardHeader>
                         <CardTitle className="text-2xl flex items-center gap-3">
                           <UserCheck className="w-6 h-6 text-primary" />
                           Your Privacy Rights
@@ -242,7 +242,7 @@ const PrivacyPolicy = () => {
                         <CardDescription>
                           You have complete control over your personal data.
                         </CardDescription>
-                      </CardHeader>
+                </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="grid gap-4">
                           <div className="p-4 border rounded-lg">
@@ -266,8 +266,8 @@ const PrivacyPolicy = () => {
                             <Badge variant="outline">Partial service</Badge>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                </CardContent>
+              </Card>
                   </div>
                 )}
 
@@ -275,7 +275,7 @@ const PrivacyPolicy = () => {
                 {activeSection === "contact" && (
                   <div className="space-y-6">
                     <Card className="border-0 shadow-lg">
-                      <CardHeader>
+                <CardHeader>
                         <CardTitle className="text-2xl flex items-center gap-3">
                           <Mail className="w-6 h-6 text-primary" />
                           Privacy Questions?
@@ -283,7 +283,7 @@ const PrivacyPolicy = () => {
                         <CardDescription>
                           We're here to help with any privacy concerns or questions.
                         </CardDescription>
-                      </CardHeader>
+                </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="grid md:grid-cols-2 gap-6">
                           <div className="p-4 bg-primary/5 rounded-lg">
@@ -301,8 +301,8 @@ const PrivacyPolicy = () => {
                           <h4 className="font-semibold text-blue-800 mb-2">Need Help?</h4>
                           <p className="text-sm text-blue-700">Our privacy team is available to help you understand your rights and exercise them.</p>
                         </div>
-                      </CardContent>
-                    </Card>
+                </CardContent>
+              </Card>
                   </div>
                 )}
               </div>

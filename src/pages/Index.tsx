@@ -7,6 +7,7 @@ import BenefitsSection from "@/components/BenefitsSection";
 import FooterSection from "@/components/FooterSection";
 
 const Index = () => {
+  console.log('Index page rendering');
   return (
     <div className="min-h-screen">
       <Navigation />

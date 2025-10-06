@@ -1,6 +1,7 @@
 import LoginChat from "@/components/LoginChat";
 
 const ChatPreviewSection = () => {
+  console.log('ChatPreviewSection rendering');
   return (
     <section className="mt-0 md:mt-0 -translate-y-0 pb-16">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">

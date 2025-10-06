@@ -256,7 +256,7 @@ const TermsOfService = () => {
                 {activeSection === "disclaimers" && (
                   <div className="space-y-6">
                     <Card className="border-0 shadow-lg">
-                      <CardHeader>
+                <CardHeader>
                         <CardTitle className="text-2xl flex items-center gap-3">
                           <AlertTriangle className="w-6 h-6 text-amber-600" />
                           Important Disclaimers
@@ -264,7 +264,7 @@ const TermsOfService = () => {
                         <CardDescription>
                           Please read these carefully - they're important for your safety.
                         </CardDescription>
-                      </CardHeader>
+                </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="p-6 bg-yellow-50 border border-yellow-200 rounded-lg">
                           <h4 className="font-semibold text-yellow-800 mb-2">⚠️ Not Medical Advice</h4>
@@ -286,8 +286,8 @@ const TermsOfService = () => {
                             <p className="text-sm text-gray-600">In case of medical emergency, contact emergency services immediately</p>
                           </div>
                         </div>
-                      </CardContent>
-                    </Card>
+                </CardContent>
+              </Card>
                   </div>
                 )}
 
@@ -295,7 +295,7 @@ const TermsOfService = () => {
                 {activeSection === "liability" && (
                   <div className="space-y-6">
                     <Card className="border-0 shadow-lg">
-                      <CardHeader>
+                <CardHeader>
                         <CardTitle className="text-2xl flex items-center gap-3">
                           <Shield className="w-6 h-6 text-amber-600" />
                           Limitation of Liability
@@ -303,7 +303,7 @@ const TermsOfService = () => {
                         <CardDescription>
                           Our liability is limited as described below.
                         </CardDescription>
-                      </CardHeader>
+                </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="p-6 bg-blue-50 border border-blue-200 rounded-lg">
                           <h4 className="font-semibold text-blue-800 mb-2">Service Availability</h4>
@@ -332,8 +332,8 @@ const TermsOfService = () => {
                             </li>
                           </ul>
                         </div>
-                      </CardContent>
-                    </Card>
+                </CardContent>
+              </Card>
                   </div>
                 )}
 
@@ -341,7 +341,7 @@ const TermsOfService = () => {
                 {activeSection === "changes" && (
                   <div className="space-y-6">
                     <Card className="border-0 shadow-lg">
-                      <CardHeader>
+                <CardHeader>
                         <CardTitle className="text-2xl flex items-center gap-3">
                           <Clock className="w-6 h-6 text-amber-600" />
                           Changes to Terms
@@ -349,7 +349,7 @@ const TermsOfService = () => {
                         <CardDescription>
                           How we handle updates to these terms.
                         </CardDescription>
-                      </CardHeader>
+                </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                           <h4 className="font-semibold text-green-800 mb-2">We'll Notify You</h4>
@@ -380,8 +380,8 @@ const TermsOfService = () => {
                             Minor clarifications or corrections may be made without notice, but won't affect your rights or obligations.
                           </p>
                         </div>
-                      </CardContent>
-                    </Card>
+                </CardContent>
+              </Card>
                   </div>
                 )}
               </div>

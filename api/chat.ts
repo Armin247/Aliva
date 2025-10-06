@@ -44,7 +44,19 @@ When making food recommendations:
 - Mention local dishes that can be made healthier or align with nutritional goals
 - Use familiar local ingredients in your suggestions
 - Reference local markets, grocery stores, or food vendors where appropriate
-- Be culturally sensitive and aware of regional preferences`
+- Be culturally sensitive and aware of regional preferences
+
+When suggesting recipes:
+- Recommend traditional dishes from ${country} that can be made healthier
+- Suggest local ingredients and cooking methods common in the region
+- Consider seasonal availability of ingredients in ${city ? city + ', ' : ''}${country}
+- Provide cooking tips specific to local cuisine styles
+
+When discussing restaurants:
+- Mention that you can help find healthy restaurants nearby
+- Suggest asking "find restaurants near me" to see local options
+- Consider local dining culture and food preferences
+- Recommend cuisines that are popular and healthy in the area`
     : '';
 
   const guidelines = `\n\nGuidelines for responses:
@@ -75,6 +87,23 @@ const getLocationFromRequest = (req: any): { country?: string; city?: string } =
   return { country, city };
 };
 
+// Reverse geocoding to get city/country from coordinates
+const getLocationFromCoordinates = async (lat: number, lng: number): Promise<{ country?: string; city?: string }> => {
+  try {
+    // Using a free reverse geocoding service
+    const response = await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${lat}&longitude=${lng}&localityLanguage=en`);
+    const data = await response.json();
+    
+    return {
+      country: data.countryName,
+      city: data.city || data.locality
+    };
+  } catch (error) {
+    console.error('Reverse geocoding failed:', error);
+    return {};
+  }
+};
+
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
@@ -84,6 +113,8 @@ interface RequestBody {
   message: string;
   chatHistory?: ChatMessage[];
   location?: {
+    latitude?: number;
+    longitude?: number;
     country?: string;
     city?: string;
   };
@@ -136,13 +167,25 @@ export default async function handler(req: any, res: any) {
     }
 
     // Use provided location or detect from request headers
-    const detectedLocation = getLocationFromRequest(req);
-    const finalLocation = {
-      country: location?.country || detectedLocation.country,
-      city: location?.city || detectedLocation.city
-    };
-
-    console.log('Using location:', finalLocation);
+    let finalLocation = { country: '', city: '' };
+    
+    if (location?.latitude && location?.longitude) {
+      // Use precise coordinates to get location
+      const geoLocation = await getLocationFromCoordinates(location.latitude, location.longitude);
+      finalLocation = {
+        country: geoLocation.country || location.country || '',
+        city: geoLocation.city || location.city || ''
+      };
+      console.log('Using precise location from coordinates:', finalLocation);
+    } else {
+      // Fallback to IP-based location detection
+      const detectedLocation = getLocationFromRequest(req);
+      finalLocation = {
+        country: location?.country || detectedLocation.country || '',
+        city: location?.city || detectedLocation.city || ''
+      };
+      console.log('Using IP-based location:', finalLocation);
+    }
 
     // Build conversation history for context with location-aware prompt
     const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
