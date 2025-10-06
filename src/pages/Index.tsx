@@ -10,7 +10,6 @@ const Index = () => {
   console.log('Index page rendering');
   return (
     <div className="min-h-screen">
-      <div className="bg-blue-500 text-white p-4 text-center font-bold">Index page is rendering!</div>
       <Navigation />
       <HeroSection />
       <ChatPreviewSection />

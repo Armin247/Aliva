@@ -8,7 +8,6 @@ const ChatPreviewSection = () => {
         <div className="rounded-[28px] bg-white shadow-xl border border-black/5 p-4 sm:p-6 md:p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-10 items-center">
             <div className="order-2 md:order-1">
-              <div className="bg-green-500 text-white p-4 text-center font-bold mb-4">ChatPreviewSection is rendering!</div>
               <LoginChat />
             </div>
             <div className="order-1 md:order-2">
