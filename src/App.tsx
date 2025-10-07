@@ -18,6 +18,7 @@ import HelpCenter from "./pages/HelpCenter";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import Security from "./pages/Security";
+import Upgrade from "./pages/Upgrade";
 
 // Create QueryClient with error handling
 const queryClient = new QueryClient({
@@ -58,6 +59,7 @@ const App: React.FC = () => {
               <Route path="/privacy" element={<PrivacyPolicy />} />
               <Route path="/terms" element={<TermsOfService />} />
               <Route path="/security" element={<Security />} />
+              <Route path="/upgrade" element={<Upgrade />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </TooltipProvider>

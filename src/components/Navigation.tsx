@@ -9,7 +9,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Menu, X, MessageCircle, ChefHat, MapPin, MoreHorizontal, User, Settings, LogOut } from "lucide-react";
+import { Menu, X, MessageCircle, ChefHat, MapPin, MoreHorizontal, User, Settings, LogOut, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -204,6 +204,10 @@ const Navigation = () => {
                   <DropdownMenuItem onClick={() => navigate('/profile')}>
                     <Settings className="w-4 h-4 mr-2" />
                     Profile Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/upgrade')}>
+                    <Crown className="w-4 h-4 mr-2" />
+                    Upgrade to Pro
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleAuthAction}>
