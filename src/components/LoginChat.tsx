@@ -56,6 +56,14 @@ const LoginChat = () => {
   const [dailyCount, setDailyCount] = useState<number>(0);
   const [adsVisible, setAdsVisible] = useState<boolean>(false);
 
+  // Persona and safety guardrails
+  const AI_PERSONA_HEADER = `You are Aliva — an AI wellness companion combining a friendly, down-to-earth tone with practical guidance.
+Role: supportive friend + mental health coach + nutritionist.
+Style: warm, validating, non-judgmental, concise, and actionable. Use first person plural when encouraging ("let's try...").
+Boundaries: You are not a licensed clinician and cannot provide diagnosis. Encourage professional help for clinical concerns.
+Safety: If user mentions intent to harm self or others, or a medical emergency, advise immediate help and crisis resources. Avoid providing instructions that could increase risk. Focus on grounding, coping skills, and seeking support.
+Nutrition: Respect allergies and medical conditions. Prefer simple, budget-friendly, culturally adaptable suggestions.`;
+
   useEffect(() => {
     const loadProfile = async () => {
       if (!user?.uid) return;
@@ -393,9 +401,7 @@ const LoginChat = () => {
 
   const callOpenAI = async (userMessage: string, chatHistory: ChatMessage[], useFallback = false) => {
     const profileContext = buildProfileContext();
-    const enhancedMessage = profileContext 
-      ? `${userMessage}${profileContext}` 
-      : userMessage;
+    const enhancedMessage = `${AI_PERSONA_HEADER}\n\n[User message]: ${userMessage}${profileContext}`;
 
     // Client-side free tier guard (3/day)
     let isActivePaid = false;
@@ -499,6 +505,22 @@ const LoginChat = () => {
     // Scroll after user message
     scrollToBottom();
 
+    // Lightweight crisis detection
+    const crisisPatterns = [
+      /suicid(e|al)|kill myself|end my life|want to die/i,
+      /self[-\s]?harm|hurt myself|cutting|overdose/i,
+      /hurt (someone|others)|kill (someone|them)/i,
+      /i can't go on|no reason to live|i am a danger/i
+    ];
+    const isCrisis = crisisPatterns.some(rx => rx.test(text));
+    if (isCrisis) {
+      const crisisResponse = `I'm really glad you reached out. Your feelings matter, and you don't have to face this alone.\n\nIf you feel at immediate risk, please contact your local emergency number right now. If you're in the U.S., call or text 988 (Suicide & Crisis Lifeline). In the U.K., call Samaritans at 116 123. If you're elsewhere, your local health services can connect you to 24/7 support.\n\nFor right now, can we try a quick grounding exercise together? Name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, and 1 you can taste. Take slow breaths: in 4 seconds, hold 4, out 6.\n\nWould you like help finding professional support in your area, or to talk through what you're feeling in a safer way?`;
+      const assistantMsg: ChatMessage = { role: "assistant", content: crisisResponse };
+      setMessages(prev => [...prev, assistantMsg]);
+      setThinking(false);
+      return;
+    }
+
     try {
       const result = await callOpenAI(text, messages);
 
@@ -528,7 +550,7 @@ const LoginChat = () => {
             </div>
             <div className="font-semibold">Chat with Aliva</div>
             <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary border-primary/20">
-              AI Nutritionist
+              AI Wellness Companion
             </Badge>
             {userProfile && (
               <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">
@@ -586,7 +608,7 @@ const LoginChat = () => {
                     {idx === 0 ? (
                       <div className="text-center w-full">
                         <h2 className="text-3xl font-semibold mb-2">Hi, I am Aliva.</h2>
-                        <p className="text-xl text-primary font-medium">What can I help with?</p>
+                        <p className="text-xl text-primary font-medium">Your friendly wellness companion — how can I support you today?</p>
                       </div>
                     ) : (
                       <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
@@ -657,7 +679,7 @@ const LoginChat = () => {
           <div className="mt-auto pt-4 pb-2">
             <div className="flex gap-2 items-center bg-gray-100 rounded-full px-4 py-2.5 border border-gray-200">
               <Input
-                placeholder="Ask anything"
+                placeholder="Ask about nutrition, mindset, or life — I'm here for you"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSend()}
