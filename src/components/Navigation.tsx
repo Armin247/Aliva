@@ -20,6 +20,8 @@ const Navigation = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [accountPlan, setAccountPlan] = useState<string>('');
+  const [accountExpiry, setAccountExpiry] = useState<string>('');
   // Handle post-payment activation on redirect
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -55,6 +57,29 @@ const Navigation = () => {
       }
     }
   }, [location.search, user, toast]);
+
+  // Load profile to show plan status in nav
+  useEffect(() => {
+    (async () => {
+      if (!user?.uid) {
+        setAccountPlan('');
+        setAccountExpiry('');
+        return;
+      }
+      try {
+        const profile = await profileService.getProfile(user.uid);
+        const plan = (profile as any)?.plan || 'FREE';
+        let expires = '';
+        const exp = (profile as any)?.planExpiresAt;
+        if (exp) {
+          const d = typeof exp?.toDate === 'function' ? exp.toDate() : (exp instanceof Date ? exp : new Date(exp));
+          if (!Number.isNaN(d.getTime())) expires = d.toLocaleDateString();
+        }
+        setAccountPlan(plan);
+        setAccountExpiry(expires);
+      } catch {}
+    })();
+  }, [user]);
 
   // Helper function to get user initials
   const getUserInitials = (name: string | null, email: string | null): string => {
@@ -233,6 +258,12 @@ const Navigation = () => {
                       {userInitials}
                     </div>
                     {user.displayName || user.email}
+                    {accountPlan && (
+                      <span className="ml-2 text-xs px-2 py-0.5 rounded-full border">
+                        {accountPlan}
+                        {accountExpiry && <span className="ml-1 opacity-70">(exp {accountExpiry})</span>}
+                      </span>
+                    )}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-56">
