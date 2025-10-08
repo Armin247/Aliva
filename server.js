@@ -3,6 +3,9 @@ import express from 'express';
 import cors from 'cors';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+// Stripe was previously used; switching to Paystack
+// import Stripe from 'stripe';
+import fetch from 'node-fetch';
 
 // Load environment variables
 dotenv.config();
@@ -12,8 +15,14 @@ const CONFIG = {
   PORT: process.env.PORT || 5000,
   OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   NODE_ENV: process.env.NODE_ENV || 'development',
+  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
+  // Paystack
+  PAYSTACK_SECRET_KEY: process.env.PAYSTACK_SECRET_KEY,
+  PAYSTACK_CURRENCY: process.env.PAYSTACK_CURRENCY || 'NGN',
+  PAYSTACK_BASE_URL: process.env.PAYSTACK_BASE_URL || 'https://api.paystack.co',
   CORS_ORIGINS: [
     'http://localhost:8080',
+    'http://localhost:8081',
     'http://localhost:5173', 
     'http://localhost:3000',
     'http://localhost',
@@ -54,7 +63,7 @@ const app = express();
 // Middleware Setup
 app.use(cors({
   origin: CONFIG.CORS_ORIGINS,
-  methods: ['GET', 'POST'],
+  methods: ['GET', 'POST', 'OPTIONS'],
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -69,6 +78,7 @@ app.use((req, res, next) => {
 
 // Initialize OpenAI
 let openaiClient = null;
+// let stripeClient = null; // no longer used
 
 const initializeOpenAI = () => {
   try {
@@ -89,6 +99,8 @@ const initializeOpenAI = () => {
     return false;
   }
 };
+
+// No explicit client init required for Paystack; we'll call its REST API
 
 // Helper: Build messages for OpenAI
 const buildMessages = (userMessage, chatHistory = []) => {
@@ -230,6 +242,78 @@ app.post('/api/chat', async (req, res) => {
   }
 });
 
+// Payments: Initialize Paystack Transaction
+app.post('/api/payments/init', async (req, res) => {
+  try {
+    if (!CONFIG.PAYSTACK_SECRET_KEY) {
+      return res.status(503).json({ error: 'Payment service unavailable: PAYSTACK_SECRET_KEY not set' });
+    }
+
+    const { plan, interval = 'monthly', customerEmail } = req.body || {};
+    console.log('🔔 Init Paystack:', { plan, interval, customerEmail });
+    const normalizedPlan = (plan || '').toString().toUpperCase();
+    const normalizedInterval = (interval || 'monthly').toString().toLowerCase();
+
+    if (!customerEmail) {
+      return res.status(400).json({ error: 'Customer email is required' });
+    }
+    if (!['PRO', 'PREMIUM'].includes(normalizedPlan)) {
+      return res.status(400).json({ error: 'Invalid plan' });
+    }
+    if (!['monthly', 'yearly'].includes(normalizedInterval)) {
+      return res.status(400).json({ error: 'Invalid interval' });
+    }
+
+    // Determine amount (kobo) - set your pricing here
+    // kobo = NGN * 100
+    const amountByPlan = {
+      PRO: { monthly: 999000, yearly: 9900000 }, // ₦9,990.00 and ₦99,000.00
+      PREMIUM: { monthly: 1999000, yearly: 19900000 } // ₦19,990.00 and ₦199,000.00
+    };
+
+    const amount = amountByPlan[normalizedPlan]?.[normalizedInterval];
+    if (!amount) {
+      return res.status(500).json({ error: 'Amount not configured' });
+    }
+
+    const originHeader = req.headers['origin'];
+    const baseUrl = typeof originHeader === 'string' ? originHeader : CONFIG.FRONTEND_URL;
+    const callbackUrl = `${baseUrl}/dashboard?upgrade=success`;
+
+    const initResponse = await fetch(`${CONFIG.PAYSTACK_BASE_URL}/transaction/initialize`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${CONFIG.PAYSTACK_SECRET_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        email: customerEmail,
+        amount, // in kobo
+        currency: CONFIG.PAYSTACK_CURRENCY,
+        callback_url: callbackUrl,
+        metadata: {
+          plan: normalizedPlan,
+          interval: normalizedInterval
+        }
+      })
+    });
+
+    const text = await initResponse.text();
+    let result;
+    try { result = JSON.parse(text); } catch { result = { raw: text }; }
+    if (!result?.status) {
+      console.error('❌ Paystack init failed:', result);
+      return res.status(500).json({ error: result?.message || 'Failed to initialize transaction', details: result });
+    }
+
+    // Return authorization URL to redirect user
+    return res.status(200).json({ authorizationUrl: result.data.authorization_url, reference: result.data.reference });
+  } catch (error) {
+    console.error('❌ Error initializing Paystack transaction:', error);
+    return res.status(500).json({ error: 'Failed to initialize transaction' });
+  }
+});
+
 // Root Endpoint
 app.get('/', (req, res) => {
   res.json({
@@ -276,11 +360,13 @@ const startServer = () => {
     console.log(`🌍  Environment:    ${CONFIG.NODE_ENV}`);
     console.log(`🔑  OpenAI API Key: ${CONFIG.OPENAI_API_KEY ? '✅ Present' : '❌ Missing'}`);
     console.log(`🤖  OpenAI Client:  ${isOpenAIReady ? '✅ Ready' : '❌ Not Initialized'}`);
+    console.log(`💳  Payments:       Paystack enabled: ${CONFIG.PAYSTACK_SECRET_KEY ? '✅' : '❌'}`);
     console.log('─'.repeat(60));
     console.log('📋  Endpoints:');
     console.log(`    GET  http://localhost:${CONFIG.PORT}/`);
     console.log(`    GET  http://localhost:${CONFIG.PORT}/api/health`);
     console.log(`    POST http://localhost:${CONFIG.PORT}/api/chat`);
+    console.log(`    POST http://localhost:${CONFIG.PORT}/api/payments/init`);
     console.log('═'.repeat(60) + '\n');
 
     if (!isOpenAIReady) {

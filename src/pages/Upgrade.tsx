@@ -7,17 +7,63 @@ import { Badge } from "@/components/ui/badge";
 import Navigation from "@/components/Navigation";
 import FooterSection from "@/components/FooterSection";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Upgrade = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
+  const { user } = useAuth();
 
-  const handleUpgrade = (planType: string) => {
-    toast({
-      title: "Coming Soon!",
-      description: `${planType} plan will be available soon. Stay tuned!`,
-    });
+  const handleUpgrade = async (planType: string) => {
+    try {
+      const interval = selectedPlan === 'monthly' ? 'monthly' : 'yearly';
+      if (!user?.email) {
+        toast({
+          title: 'Sign in required',
+          description: 'Please sign in to continue with payment.',
+          variant: 'destructive'
+        });
+        navigate('/auth');
+        return;
+      }
+
+      const apiBase = import.meta.env.VITE_API_BASE_URL || '';
+      const response = await fetch(`${apiBase}/api/payments/init`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          plan: planType,
+          interval,
+          customerEmail: user.email
+        })
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to start checkout');
+      }
+
+      const data = await response.json();
+      if (data?.authorizationUrl) {
+        window.location.assign(data.authorizationUrl);
+        return;
+      }
+
+      // Fallback if URL not present
+      toast({
+        title: 'Payment initialized',
+        description: 'Redirecting to Paystack...',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Payment error',
+        description: error?.message || 'Unable to start checkout. Please try again.',
+        variant: 'destructive'
+      });
+    }
   };
 
   const plans = [
@@ -38,7 +84,7 @@ const Upgrade = () => {
     },
     {
       name: "Pro",
-      price: selectedPlan === 'monthly' ? "$9.99" : "$99",
+      price: selectedPlan === 'monthly' ? "₦9,990" : "₦99,000",
       period: selectedPlan === 'monthly' ? "/month" : "/year",
       description: "For dedicated health enthusiasts",
       popular: true,
@@ -54,11 +100,11 @@ const Upgrade = () => {
       buttonText: "Upgrade to Pro",
       buttonVariant: "default" as const,
       icon: Zap,
-      savings: selectedPlan === 'yearly' ? "Save $20/year" : null,
+      savings: selectedPlan === 'yearly' ? "Save ₦20,880/year" : null,
     },
     {
       name: "Premium",
-      price: selectedPlan === 'monthly' ? "$19.99" : "$199",
+      price: selectedPlan === 'monthly' ? "₦19,990" : "₦199,000",
       period: selectedPlan === 'monthly' ? "/month" : "/year",
       description: "For professionals and families",
       features: [
@@ -73,7 +119,7 @@ const Upgrade = () => {
       buttonText: "Upgrade to Premium",
       buttonVariant: "default" as const,
       icon: Crown,
-      savings: selectedPlan === 'yearly' ? "Save $40/year" : null,
+      savings: selectedPlan === 'yearly' ? "Save ₦40,880/year" : null,
     },
   ];
 
