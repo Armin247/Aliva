@@ -55,7 +55,6 @@ const LoginChat = () => {
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [dailyCount, setDailyCount] = useState<number>(0);
   const [adsVisible, setAdsVisible] = useState<boolean>(false);
-  const adsenseSlotId = (import.meta.env.VITE_ADSENSE_SLOT_CHAT as string) || '';
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -134,16 +133,7 @@ const LoginChat = () => {
     }, 100);
   }, [messages, thinking]);
 
-  useEffect(() => {
-    if (adsVisible && adsenseSlotId) {
-      try {
-        // @ts-ignore
-        (window.adsbygoogle = (window as any).adsbygoogle || []).push({});
-      } catch (e) {
-        // ignore
-      }
-    }
-  }, [adsVisible, adsenseSlotId]);
+  // Auto ads enabled globally via index.html; no manual slot loading needed
 
   const quickPrompts = useMemo(
     () => [
@@ -553,25 +543,7 @@ const LoginChat = () => {
             )}
           </div>
 
-          {adsVisible && (
-            <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-              <div className="text-xs text-amber-700 mb-2">Advertisement</div>
-              {adsenseSlotId ? (
-                <ins
-                  className="adsbygoogle"
-                  style={{ display: 'block' }}
-                  data-ad-client="ca-pub-9195971041974756"
-                  data-ad-slot={adsenseSlotId}
-                  data-ad-format="auto"
-                  data-full-width-responsive="true"
-                />
-              ) : (
-                <div className="w-full h-24 bg-amber-100 rounded flex items-center justify-center text-sm text-amber-700">
-                  Ad space (configure VITE_ADSENSE_SLOT_CHAT)
-                </div>
-              )}
-            </div>
-          )}
+          {/* Auto ads enabled globally; no manual ad unit rendered here */}
 
           {!userProfile && (
             <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
