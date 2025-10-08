@@ -550,11 +550,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
             </div>
             <div className="font-semibold">Chat with Aliva</div>
             <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary border-primary/20">
-<<<<<<< HEAD
-              AI Wellness Companion
-=======
               AI Health & Wellness Companion
->>>>>>> 10448c53e9352f19c357814b4db7d93d704083f5
             </Badge>
             {userProfile && (
               <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">
@@ -612,12 +608,8 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
                     {idx === 0 ? (
                       <div className="text-center w-full">
                         <h2 className="text-3xl font-semibold mb-2">Hi, I am Aliva.</h2>
-<<<<<<< HEAD
-                        <p className="text-xl text-primary font-medium">Your friendly wellness companion — how can I support you today?</p>
-=======
                         <p className="text-xl text-primary font-medium">Your health, wellness, and mental health companion</p>
                         <p className="text-sm text-gray-500 mt-2">What can I help with today?</p>
->>>>>>> 10448c53e9352f19c357814b4db7d93d704083f5
                       </div>
                     ) : (
                       <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
@@ -658,42 +650,37 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
           </div>
 
           {messages.length === 1 && (
-            <div className="flex flex-wrap gap-2 justify-center mb-4 mt-4">
-              {quickPrompts.map((q, i) => (
-                <Button 
-                  key={i} 
-                  size="sm" 
-                  variant="outline" 
-                  className="rounded-full text-xs hover:bg-primary/10 hover:text-primary border-primary/20 px-4 py-2" 
-                  onClick={() => {
-                    if (q === "Find restaurants near me") {
-                      handleFindRestaurants();
-                    } else if (q === "Suggest local recipes") {
-                      setInput("Suggest some healthy local recipes based on my location and dietary preferences");
-                    } else if (q === "What's in season here?") {
-                      setInput("What fruits and vegetables are in season in my area right now?");
-                    } else {
-                      setInput(q);
-                    }
-                  }}
-                  disabled={thinking}
-                >
-                  {q === "Find restaurants near me" && <MapPin className="h-3 w-3 mr-1" />}
-                  {q}
-                </Button>
-              ))}
-            </div>
-          )}
-
-          {messages.length === 1 && (
-            <div className="text-center mb-4 p-4 bg-gradient-to-r from-primary/5 to-blue-50 rounded-xl border border-primary/10">
-              <p className="text-sm text-gray-700 mb-2">
-                I'm here to help with nutrition, mental health, stress, emotional support, and more.
-              </p>
-              <p className="text-xs text-gray-500">
-                Feel free to talk to me about anything - your diet, how you're feeling, or just to chat.
-              </p>
-            </div>
+            <>
+              <div className="text-center mb-4 p-4 bg-gradient-to-r from-primary/5 to-blue-50 rounded-xl border border-primary/10">
+                <p className="text-sm text-gray-700 mb-2">
+                  I'm here to help with nutrition, mental health, stress, emotional support, and more.
+                </p>
+                <p className="text-xs text-gray-500">
+                  Feel free to talk to me about anything - your diet, how you're feeling, or just to chat.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-2 justify-center mb-4">
+                {quickPrompts.map((q, i) => (
+                  <Button
+                    key={i}
+                    size="sm"
+                    variant="outline"
+                    className="rounded-full text-xs hover:bg-primary/10 hover:text-primary border-primary/20 px-4 py-2"
+                    onClick={() => {
+                      if (q === "Find restaurants near me") {
+                        handleFindRestaurants();
+                      } else {
+                        setInput(q);
+                      }
+                    }}
+                    disabled={thinking}
+                  >
+                    {q === "Find restaurants near me" && <MapPin className="h-3 w-3 mr-1" />}
+                    {q}
+                  </Button>
+                ))}
+              </div>
+            </>
           )}
 
           <div className="mt-auto pt-4 pb-2">
