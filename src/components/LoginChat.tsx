@@ -145,12 +145,12 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
 
   const quickPrompts = useMemo(
     () => [
-      userProfile ? "Suggest meals for me" : "Suggest meals for me",
-      userProfile ? "Create a personalized meal plan" : "Create a personalized meal plan",
-      userProfile ? "What should I eat today?" : "What should I eat today?",
+      "Suggest meals for me",
+      "I'm feeling stressed",
+      "Help me feel better",
       "Find restaurants near me",
-      "Suggest local recipes",
-      "What's in season here?",
+      "I need advice",
+      "Talk to me about my day",
     ],
     [userProfile]
   );
@@ -550,7 +550,11 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
             </div>
             <div className="font-semibold">Chat with Aliva</div>
             <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary border-primary/20">
+<<<<<<< HEAD
               AI Wellness Companion
+=======
+              AI Health & Wellness Companion
+>>>>>>> 10448c53e9352f19c357814b4db7d93d704083f5
             </Badge>
             {userProfile && (
               <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">
@@ -572,11 +576,11 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
               <div className="flex items-start gap-2">
                 <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5" />
                 <div className="flex-1 text-sm text-blue-700">
-                  <p className="font-medium mb-1">Get Personalized Recommendations</p>
-                  <p className="text-xs">Complete your health profile to receive tailored nutrition advice based on your goals, allergies, and dietary needs.</p>
-                  <Button 
-                    size="sm" 
-                    className="mt-2 h-7 text-xs" 
+                  <p className="font-medium mb-1">Get Personalized Support</p>
+                  <p className="text-xs">Complete your health profile to receive tailored nutrition, mental health, and wellness advice based on your unique needs and goals.</p>
+                  <Button
+                    size="sm"
+                    className="mt-2 h-7 text-xs"
                     onClick={() => navigate('/profile')}
                   >
                     Complete Profile
@@ -608,7 +612,12 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
                     {idx === 0 ? (
                       <div className="text-center w-full">
                         <h2 className="text-3xl font-semibold mb-2">Hi, I am Aliva.</h2>
+<<<<<<< HEAD
                         <p className="text-xl text-primary font-medium">Your friendly wellness companion — how can I support you today?</p>
+=======
+                        <p className="text-xl text-primary font-medium">Your health, wellness, and mental health companion</p>
+                        <p className="text-sm text-gray-500 mt-2">What can I help with today?</p>
+>>>>>>> 10448c53e9352f19c357814b4db7d93d704083f5
                       </div>
                     ) : (
                       <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 ${
@@ -673,6 +682,17 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
                   {q}
                 </Button>
               ))}
+            </div>
+          )}
+
+          {messages.length === 1 && (
+            <div className="text-center mb-4 p-4 bg-gradient-to-r from-primary/5 to-blue-50 rounded-xl border border-primary/10">
+              <p className="text-sm text-gray-700 mb-2">
+                I'm here to help with nutrition, mental health, stress, emotional support, and more.
+              </p>
+              <p className="text-xs text-gray-500">
+                Feel free to talk to me about anything - your diet, how you're feeling, or just to chat.
+              </p>
             </div>
           )}
 
