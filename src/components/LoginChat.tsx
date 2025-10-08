@@ -53,6 +53,9 @@ const LoginChat = () => {
   
   // Load user profile from database
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [dailyCount, setDailyCount] = useState<number>(0);
+  const [adsVisible, setAdsVisible] = useState<boolean>(false);
+  const adsenseSlotId = (import.meta.env.VITE_ADSENSE_SLOT_CHAT as string) || '';
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -63,6 +66,24 @@ const LoginChat = () => {
         if (profile) {
           setUserProfile(profile);
           console.log('Profile loaded for AI:', profile);
+          // Determine paid status and ads visibility
+          const expires = (profile as any).planExpiresAt;
+          let isActivePaid = false;
+          if (profile.plan && profile.plan !== 'FREE') {
+            if (!expires) {
+              isActivePaid = true;
+            } else {
+              const expDate = (typeof (expires as any)?.toDate === 'function')
+                ? (expires as any).toDate()
+                : (expires instanceof Date ? expires : new Date(expires));
+              isActivePaid = expDate > new Date();
+            }
+          }
+          setAdsVisible(!isActivePaid);
+          // Load today's count
+          const todayKey = `chat_count_${new Date().toISOString().slice(0,10)}`;
+          const count = parseInt(localStorage.getItem(todayKey) || '0', 10);
+          setDailyCount(Number.isFinite(count) ? count : 0);
         }
       } catch (error) {
         console.error('Error loading profile:', error);
@@ -112,6 +133,17 @@ const LoginChat = () => {
       }
     }, 100);
   }, [messages, thinking]);
+
+  useEffect(() => {
+    if (adsVisible && adsenseSlotId) {
+      try {
+        // @ts-ignore
+        (window.adsbygoogle = (window as any).adsbygoogle || []).push({});
+      } catch (e) {
+        // ignore
+      }
+    }
+  }, [adsVisible, adsenseSlotId]);
 
   const quickPrompts = useMemo(
     () => [
@@ -375,6 +407,24 @@ const LoginChat = () => {
       ? `${userMessage}${profileContext}` 
       : userMessage;
 
+    // Client-side free tier guard (3/day)
+    let isActivePaid = false;
+    if (userProfile?.plan && userProfile.plan !== 'FREE') {
+      const expires = (userProfile as any).planExpiresAt;
+      if (!expires) {
+        isActivePaid = true;
+      } else {
+        const expDate = (typeof (expires as any)?.toDate === 'function')
+          ? (expires as any).toDate()
+          : (expires instanceof Date ? expires : new Date(expires));
+        isActivePaid = expDate > new Date();
+      }
+    }
+    if (!isActivePaid && dailyCount >= 3) {
+      setError('Daily limit reached on Free plan. Upgrade to continue.');
+      return { response: 'You have reached the daily limit for the free plan. Please upgrade to continue unlimited chats.', restaurants: [] };
+    }
+
     const url = useFallback ? FALLBACK_API_URL : API_URL;
     console.log('Making API call to:', url);
     console.log('Environment:', import.meta.env.DEV ? 'development' : 'production');
@@ -393,6 +443,7 @@ const LoginChat = () => {
             role: msg.role,
             content: msg.content
           })),
+          userId: user?.uid,
           location: userLocation ? {
             latitude: userLocation.latitude,
             longitude: userLocation.longitude
@@ -410,6 +461,13 @@ const LoginChat = () => {
       }
 
       const data = await response.json();
+      // Increment daily count for free users
+      if (!isActivePaid) {
+        const todayKey = `chat_count_${new Date().toISOString().slice(0,10)}`;
+        const next = dailyCount + 1;
+        localStorage.setItem(todayKey, String(next));
+        setDailyCount(next);
+      }
       console.log('API Response:', data);
       return { response: data.response, restaurants: [] };
     } catch (error) {
@@ -494,6 +552,26 @@ const LoginChat = () => {
               </Badge>
             )}
           </div>
+
+          {adsVisible && (
+            <div className="mb-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+              <div className="text-xs text-amber-700 mb-2">Advertisement</div>
+              {adsenseSlotId ? (
+                <ins
+                  className="adsbygoogle"
+                  style={{ display: 'block' }}
+                  data-ad-client="ca-pub-9195971041974756"
+                  data-ad-slot={adsenseSlotId}
+                  data-ad-format="auto"
+                  data-full-width-responsive="true"
+                />
+              ) : (
+                <div className="w-full h-24 bg-amber-100 rounded flex items-center justify-center text-sm text-amber-700">
+                  Ad space (configure VITE_ADSENSE_SLOT_CHAT)
+                </div>
+              )}
+            </div>
+          )}
 
           {!userProfile && (
             <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">

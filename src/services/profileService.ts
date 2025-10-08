@@ -79,6 +79,8 @@ export class ProfileService {
       await setDoc(profileRef, {
         userId,
         fullName: profileData.fullName || '',
+        plan: profileData.plan || 'FREE',
+        planExpiresAt: profileData.planExpiresAt || null,
         dietaryPreferences: profileData.dietaryPreferences || [],
         healthGoals: profileData.healthGoals || [],
         allergies: profileData.allergies || [],

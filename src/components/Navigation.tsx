@@ -12,6 +12,7 @@ import {
 import { Menu, X, MessageCircle, ChefHat, MapPin, MoreHorizontal, User, Settings, LogOut, Crown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
+import { profileService } from "@/services/profileService";
 
 const Navigation = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -19,6 +20,41 @@ const Navigation = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  // Handle post-payment activation on redirect
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const upgradeOk = params.get('upgrade');
+    if (upgradeOk === 'success' && user?.uid) {
+      const raw = localStorage.getItem('upgrade_plan_intent');
+      if (raw) {
+        try {
+          const intent = JSON.parse(raw);
+          const plan = (intent.plan || 'PRO').toString().toUpperCase();
+          const interval = (intent.interval || 'monthly').toString().toLowerCase();
+          const now = new Date();
+          const expires = new Date(now);
+          if (interval === 'yearly') {
+            expires.setFullYear(expires.getFullYear() + 1);
+          } else {
+            expires.setMonth(expires.getMonth() + 1);
+          }
+          (async () => {
+            try {
+              await profileService.upsertProfile(user.uid, { plan, planExpiresAt: expires });
+              toast({ title: 'Upgrade successful', description: `${plan} activated. Expires on ${expires.toLocaleDateString()}` });
+              localStorage.removeItem('upgrade_plan_intent');
+              // Remove the query param without full reload
+              const url = new URL(window.location.href);
+              url.searchParams.delete('upgrade');
+              window.history.replaceState({}, '', url.toString());
+            } catch (e) {
+              toast({ title: 'Activation failed', description: 'Please contact support.', variant: 'destructive' });
+            }
+          })();
+        } catch {}
+      }
+    }
+  }, [location.search, user, toast]);
 
   // Helper function to get user initials
   const getUserInitials = (name: string | null, email: string | null): string => {

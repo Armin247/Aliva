@@ -268,6 +268,32 @@ const Profile: React.FC = () => {
           <h2 className="text-2xl font-bold">Personal Information</h2>
         </div>
 
+        {/* Plan status */}
+        <div className="mb-6">
+          <div className="bg-white border rounded-lg p-4 flex items-center gap-3">
+            <div className={`px-2 py-1 rounded text-xs font-medium ${profile?.plan && profile.plan !== 'FREE' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-gray-50 text-gray-700 border border-gray-200'}`}>
+              {profile?.plan || 'FREE'}
+            </div>
+            <div className="text-sm text-gray-700">
+              {profile?.plan && profile.plan !== 'FREE' ? (
+                <>
+                  Active plan
+                  {profile?.planExpiresAt && (
+                    <span className="ml-2 text-gray-500">
+                      Expires on {new Date((profile as any).planExpiresAt?.toDate ? (profile as any).planExpiresAt.toDate() : (profile as any).planExpiresAt).toLocaleDateString()}
+                    </span>
+                  )}
+                </>
+              ) : (
+                'Free plan - ads shown and daily chat limit applies'
+              )}
+            </div>
+            {profile?.plan === 'FREE' && (
+              <Button className="ml-auto" onClick={() => navigate('/upgrade')}>Upgrade</Button>
+            )}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card className="p-6">

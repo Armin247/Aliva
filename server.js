@@ -155,12 +155,21 @@ app.get('/api/health', (req, res) => {
 });
 
 // Chat Endpoint
+// In-memory daily counters (restart resets). Consider Redis for production.
+const dailyCounters = new Map(); // key -> { date: 'YYYY-MM-DD', count: number }
+
+function getDailyKey(userId, ip) {
+  const today = new Date().toISOString().slice(0,10);
+  const key = userId ? `u:${userId}` : `ip:${ip || 'unknown'}`;
+  return { mapKey: key, today };
+}
+
 app.post('/api/chat', async (req, res) => {
   const startTime = Date.now();
 
   try {
     // Validate request body
-    const { message, chatHistory } = req.body;
+    const { message, chatHistory, userId } = req.body;
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({
@@ -176,6 +185,22 @@ app.post('/api/chat', async (req, res) => {
       return res.status(503).json({
         error: 'Service unavailable',
         response: getFallbackResponse('no_openai')
+      });
+    }
+
+    // Enforce free plan limits (3/day) for unauthenticated users by IP.
+    // NOTE: Without secure plan verification server-side, we cap everyone unless paid status is later integrated.
+    const ip = req.headers['x-forwarded-for']?.toString().split(',')[0] || req.socket.remoteAddress;
+    const { mapKey, today } = getDailyKey(userId, ip);
+    const entry = dailyCounters.get(mapKey);
+    if (!entry || entry.date !== today) {
+      dailyCounters.set(mapKey, { date: today, count: 0 });
+    }
+    const { count } = dailyCounters.get(mapKey);
+    if (count >= 3) {
+      return res.status(429).json({
+        error: 'daily_limit_reached',
+        response: 'You have reached today\'s free limit. Please upgrade to continue.'
       });
     }
 
@@ -200,6 +225,10 @@ app.post('/api/chat', async (req, res) => {
     const duration = Date.now() - startTime;
     
     console.log(`✅ Response generated in ${duration}ms (${completion.usage.total_tokens} tokens)`);
+
+    // Increment counter after successful generation
+    const current = dailyCounters.get(mapKey) || { date: today, count: 0 };
+    dailyCounters.set(mapKey, { date: today, count: (current.count || 0) + 1 });
 
     res.status(200).json({
       response: aiResponse,

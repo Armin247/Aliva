@@ -2,6 +2,8 @@ export interface UserProfile {
   id?: string;
   userId: string;
   fullName?: string;
+  plan?: 'FREE' | 'PRO' | 'PREMIUM';
+  planExpiresAt?: Date | null;
   dietaryPreferences?: string[];
   healthGoals?: string[];
   allergies?: string[];

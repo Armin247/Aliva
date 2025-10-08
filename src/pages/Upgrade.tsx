@@ -48,6 +48,8 @@ const Upgrade = () => {
 
       const data = await response.json();
       if (data?.authorizationUrl) {
+        // Mark intent so we can activate plan on return
+        localStorage.setItem('upgrade_plan_intent', JSON.stringify({ plan: planType, interval, ts: Date.now() }));
         window.location.assign(data.authorizationUrl);
         return;
       }
