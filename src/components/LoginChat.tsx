@@ -549,9 +549,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
               <Salad className="h-4 w-4 text-white" />
             </div>
             <div className="font-semibold">Chat with Aliva</div>
-            <Badge variant="secondary" className="ml-auto bg-primary/10 text-primary border-primary/20">
-              AI Health & Wellness Companion
-            </Badge>
+            
             {userProfile && (
               <Badge variant="outline" className="border-green-300 text-green-700 bg-green-50">
                 Profile Active
@@ -651,14 +649,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
 
           {messages.length === 1 && (
             <>
-              <div className="text-center mb-4 p-4 bg-gradient-to-r from-primary/5 to-blue-50 rounded-xl border border-primary/10">
-                <p className="text-sm text-gray-700 mb-2">
-                  I'm here to help with nutrition, mental health, stress, emotional support, and more.
-                </p>
-                <p className="text-xs text-gray-500">
-                  Feel free to talk to me about anything - your diet, how you're feeling, or just to chat.
-                </p>
-              </div>
+              
               <div className="flex flex-wrap gap-2 justify-center mb-4">
                 {quickPrompts.map((q, i) => (
                   <Button
