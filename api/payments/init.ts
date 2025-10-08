@@ -1,8 +1,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 
-// Initialize Paystack transaction via serverless function
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Basic CORS headers
+  // CORS (safe since same-origin in prod; keep permissive for previews)
   res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,POST');
@@ -15,7 +14,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     res.status(200).end();
     return;
   }
-
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
     return;
@@ -49,7 +47,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Invalid interval' });
     }
 
-    // NGN amounts in kobo (must match UI)
     const amountByPlan: Record<string, Record<string, number>> = {
       PRO: { monthly: 999000, yearly: 9900000 },
       PREMIUM: { monthly: 1999000, yearly: 19900000 }
@@ -59,7 +56,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'Amount not configured' });
     }
 
-    // Derive base URL for callback
     const origin = (req.headers['origin'] as string) || (req.headers['referer'] as string) || '';
     const host = (req.headers['host'] as string) || '';
     const baseUrl = origin || (host ? `https://${host}` : process.env.FRONTEND_URL || '');
@@ -76,10 +72,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         amount,
         currency: PAYSTACK_CURRENCY,
         ...(callbackUrl ? { callback_url: callbackUrl } : {}),
-        metadata: {
-          plan: normalizedPlan,
-          interval: normalizedInterval
-        }
+        metadata: { plan: normalizedPlan, interval: normalizedInterval }
       })
     });
 
@@ -87,13 +80,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let result: any;
     try { result = JSON.parse(text); } catch { result = { raw: text }; }
     if (!result?.status) {
-      console.error('❌ Paystack init failed (vercel):', result);
+      console.error('❌ Paystack init failed (vercel api/):', result);
       return res.status(500).json({ error: result?.message || 'Failed to initialize transaction', details: result });
     }
 
     return res.status(200).json({ authorizationUrl: result.data.authorization_url, reference: result.data.reference });
   } catch (error: any) {
-    console.error('❌ Error initializing Paystack transaction (vercel):', error);
+    console.error('❌ Error initializing Paystack transaction (vercel api/):', error);
     return res.status(500).json({ error: 'Failed to initialize transaction' });
   }
 }
