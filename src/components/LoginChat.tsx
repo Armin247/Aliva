@@ -47,6 +47,7 @@ const LoginChat = () => {
   const [userLocation, setUserLocation] = useState<{latitude: number, longitude: number} | null>(null);
   const [showMapDialog, setShowMapDialog] = useState(false);
   const [mapRestaurants, setMapRestaurants] = useState<any[]>([]);
+  const [mapKeyword, setMapKeyword] = useState<string | null>(null);
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
@@ -238,7 +239,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
       : '';
   };
 
-  const initializeMap = () => {
+  const initializeMap = (keyword?: string) => {
     if (!mapRef.current || !userLocation || !(window as any).google) {
       return;
     }
@@ -316,7 +317,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
       location: mapCenter,
       radius: 5000,
       type: 'restaurant',
-      keyword: 'healthy food'
+      keyword: keyword || mapKeyword || 'fast food restaurant'
     };
 
     service.nearbySearch(request, (results: any, status: any) => {
@@ -396,7 +397,35 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
     
     setShowMapDialog(true);
     setError(null);
-    setTimeout(initializeMap, 300);
+    setTimeout(() => initializeMap(), 300);
+  };
+
+  const extractFoodKeyword = (text: string): string | null => {
+    const lowered = text.toLowerCase();
+    
+    // Fast food chain keywords
+    const fastFoodKeywords = [
+      'mcdonalds','burger king','wendys','kfc','taco bell','subway','chipotle','starbucks','chick-fil-a','pizza hut','dominos','papa johns','panda express','panera','dunkin','tim hortons','five guys','in-n-out','shake shack','white castle'
+    ];
+    
+    // General food/cuisine keywords
+    const cuisineKeywords = [
+      'mediterranean','italian','mexican','thai','chinese','japanese','sushi','indian','korean','vietnamese','greek','middle eastern','lebanese','turkish','ethiopian','vegan','vegetarian','plant-based','gluten-free','paleo','keto','bbq','burger','pizza','tacos','ramen','pho','salad','bowl','grill','seafood','salmon','poke','shawarma','falafel','fast food','quick food','chain restaurant'
+    ];
+    
+    // Check for fast food chains first
+    for (const key of fastFoodKeywords) {
+      if (lowered.includes(key)) return key;
+    }
+    
+    // Then check general cuisine keywords
+    for (const key of cuisineKeywords) {
+      if (lowered.includes(key)) return key;
+    }
+    
+    // fallback: find phrases like 'near me' or 'recommend ...'
+    const match = lowered.match(/(?:recommend|find|craving|want)\s+([a-z\- ]{3,20})/);
+    return match ? match[1].trim() : null;
   };
 
   const callOpenAI = async (userMessage: string, chatHistory: ChatMessage[], useFallback = false) => {
@@ -530,6 +559,15 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
       };
 
       setMessages(prev => [...prev, assistantMsg]);
+
+      // If the conversation appears to involve food/restaurant queries, open the map with a keyword
+      const combined = `${text}\n${result.response}`;
+      const keyword = extractFoodKeyword(combined);
+      if (keyword && userLocation && (window as any).google) {
+        setMapKeyword(keyword);
+        setShowMapDialog(true);
+        setTimeout(() => initializeMap(keyword), 400);
+      }
       
       // Scroll after AI response
       scrollToBottom();
