@@ -445,7 +445,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
         isActivePaid = expDate > new Date();
       }
     }
-    if (!isActivePaid && dailyCount >= 3) {
+    if (!isActivePaid && dailyCount >= 5) {
       setError('Daily limit reached on Free plan. Upgrade to continue.');
       return { response: 'You have reached the daily limit for the free plan. Please upgrade to continue unlimited chats.', restaurants: [] };
     }
