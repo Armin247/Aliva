@@ -169,7 +169,7 @@ app.post('/api/chat', async (req, res) => {
 
   try {
     // Validate request body
-    const { message, chatHistory, userId } = req.body;
+    const { message, chatHistory, userId, isPaid } = req.body;
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
       return res.status(400).json({
@@ -189,19 +189,23 @@ app.post('/api/chat', async (req, res) => {
     }
 
     // Enforce free plan limits (3/day) for unauthenticated users by IP.
-    // NOTE: Without secure plan verification server-side, we cap everyone unless paid status is later integrated.
+    // Skip limits if client indicates a paid user (best-effort; for robust security, verify server-side).
+    const isPaidUserHeader = (req.headers['x-paid-user'] || '').toString().toLowerCase() === 'true';
+    const isPaidUser = Boolean(isPaidUserHeader || isPaid);
     const ip = req.headers['x-forwarded-for']?.toString().split(',')[0] || req.socket.remoteAddress;
     const { mapKey, today } = getDailyKey(userId, ip);
-    const entry = dailyCounters.get(mapKey);
-    if (!entry || entry.date !== today) {
-      dailyCounters.set(mapKey, { date: today, count: 0 });
-    }
-    const { count } = dailyCounters.get(mapKey);
-    if (count >= 3) {
-      return res.status(429).json({
-        error: 'daily_limit_reached',
-        response: 'You have reached today\'s free limit. Please upgrade to continue.'
-      });
+    if (!isPaidUser) {
+      const entry = dailyCounters.get(mapKey);
+      if (!entry || entry.date !== today) {
+        dailyCounters.set(mapKey, { date: today, count: 0 });
+      }
+      const { count } = dailyCounters.get(mapKey);
+      if (count >= 3) {
+        return res.status(429).json({
+          error: 'daily_limit_reached',
+          response: 'You have reached today\'s free limit. Please upgrade to continue.'
+        });
+      }
     }
 
     // Prepare messages
@@ -226,9 +230,11 @@ app.post('/api/chat', async (req, res) => {
     
     console.log(`✅ Response generated in ${duration}ms (${completion.usage.total_tokens} tokens)`);
 
-    // Increment counter after successful generation
-    const current = dailyCounters.get(mapKey) || { date: today, count: 0 };
-    dailyCounters.set(mapKey, { date: today, count: (current.count || 0) + 1 });
+    // Increment counter only for non-paid users
+    if (!isPaidUser) {
+      const current = dailyCounters.get(mapKey) || { date: today, count: 0 };
+      dailyCounters.set(mapKey, { date: today, count: (current.count || 0) + 1 });
+    }
 
     res.status(200).json({
       response: aiResponse,

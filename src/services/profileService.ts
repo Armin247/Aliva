@@ -41,6 +41,8 @@ export class ProfileService {
         const profile: UserProfile = {
           id: profileSnap.id,
           userId: data.userId,
+          plan: data.plan,
+          planExpiresAt: data.planExpiresAt?.toDate ? data.planExpiresAt.toDate() : (data.planExpiresAt ? new Date(data.planExpiresAt) : null),
           fullName: data.fullName,
           dietaryPreferences: data.dietaryPreferences || [],
           healthGoals: data.healthGoals || [],

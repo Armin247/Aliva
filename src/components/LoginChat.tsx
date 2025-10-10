@@ -51,6 +51,7 @@ const LoginChat = () => {
   const mapRef = useRef<HTMLDivElement>(null);
   const googleMapRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const [decidedFood, setDecidedFood] = useState<string | null>(null);
   
   // Load user profile from database
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
@@ -313,16 +314,40 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
     }, 1000);
 
     const service = new google.maps.places.PlacesService(map);
-    const request = {
-      location: mapCenter,
-      radius: 5000,
-      type: 'restaurant',
-      keyword: keyword || mapKeyword || 'fast food restaurant'
-    };
+    const activeKeyword = (keyword || decidedFood || mapKeyword || '').toString().trim();
 
-    service.nearbySearch(request, (results: any, status: any) => {
+    const handleResults = (results: any, status: any) => {
       if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-        setMapRestaurants(results);
+        // attach distances for sorting/filtering
+        const withDistances = results.map((place: any) => {
+          let _distanceKm = Number.POSITIVE_INFINITY;
+          if (place.geometry?.location && (window as any).google?.maps?.geometry) {
+            _distanceKm = google.maps.geometry.spherical.computeDistanceBetween(
+              new google.maps.LatLng(mapCenter.lat, mapCenter.lng),
+              place.geometry.location
+            ) / 1000;
+          }
+          return { ...place, _distanceKm };
+        });
+
+        let filtered = withDistances;
+        if (activeKeyword) {
+          const kw = activeKeyword.toLowerCase();
+          filtered = withDistances.filter((place: any) => {
+            const name = (place.name || '').toLowerCase();
+            const vicinity = (place.vicinity || place.formatted_address || '').toLowerCase();
+            return name.includes(kw) || vicinity.includes(kw);
+          });
+          if (filtered.length === 0) filtered = withDistances; // fallback
+        }
+        // sort by nearest, filter out far places (> 8km), and limit
+        filtered = filtered
+          .filter((p: any) => Number.isFinite(p._distanceKm))
+          .sort((a: any, b: any) => a._distanceKm - b._distanceKm)
+          .filter((p: any) => p._distanceKm <= 8)
+          .slice(0, 12);
+
+        setMapRestaurants(filtered);
         
         markersRef.current.forEach(marker => marker.setMap(null));
         markersRef.current = [];
@@ -330,7 +355,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
         const bounds = new google.maps.LatLngBounds();
         bounds.extend(mapCenter);
 
-        results.forEach((place: any, index: number) => {
+        filtered.forEach((place: any, index: number) => {
           if (place.geometry?.location) {
             const distance = google.maps.geometry.spherical.computeDistanceBetween(
               new google.maps.LatLng(mapCenter.lat, mapCenter.lng),
@@ -381,7 +406,24 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
 
         map.fitBounds(bounds);
       }
-    });
+    };
+
+    if (activeKeyword) {
+      const textReq = {
+        query: `${activeKeyword} restaurant`,
+        location: new google.maps.LatLng(mapCenter.lat, mapCenter.lng),
+        radius: 3000,
+        type: 'restaurant',
+      } as any;
+      service.textSearch(textReq, handleResults);
+    } else {
+      const nearbyReq = {
+        location: mapCenter,
+        radius: 3000,
+        type: 'restaurant',
+      } as any;
+      service.nearbySearch(nearbyReq, handleResults);
+    }
   };
 
   const handleFindRestaurants = () => {
@@ -400,6 +442,22 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
     setTimeout(() => initializeMap(), 300);
   };
 
+  const handleSuggestLocationsForDecidedFood = () => {
+    if (!decidedFood) return handleFindRestaurants();
+    if (!userLocation) {
+      setError("Please enable location access to find nearby restaurants");
+      return;
+    }
+    if (!(window as any).google) {
+      setError("Google Maps is still loading. Please wait a moment.");
+      return;
+    }
+    // Do not persist keyword; rely on decidedFood to drive the query
+    setShowMapDialog(true);
+    setError(null);
+    setTimeout(() => initializeMap(decidedFood || undefined), 300);
+  };
+
   const extractFoodKeyword = (text: string): string | null => {
     const lowered = text.toLowerCase();
     
@@ -410,7 +468,9 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
     
     // General food/cuisine keywords
     const cuisineKeywords = [
-      'mediterranean','italian','mexican','thai','chinese','japanese','sushi','indian','korean','vietnamese','greek','middle eastern','lebanese','turkish','ethiopian','vegan','vegetarian','plant-based','gluten-free','paleo','keto','bbq','burger','pizza','tacos','ramen','pho','salad','bowl','grill','seafood','salmon','poke','shawarma','falafel','fast food','quick food','chain restaurant'
+      'mediterranean','italian','mexican','thai','chinese','japanese','sushi','indian','korean','vietnamese','greek','middle eastern','lebanese','turkish','ethiopian','vegan','vegetarian','plant-based','gluten-free','paleo','keto','bbq','burger','pizza','tacos','ramen','pho','salad','bowl','grill','seafood','salmon','poke','shawarma','falafel','fast food','quick food','chain restaurant',
+      // Staples and common items
+      'rice','fried rice','jollof rice','jollof','white rice','brown rice','basmati','pasta','noodles','spaghetti','yam','beans','plantain','suya','amala','fufu','egusi','efo riro','stew','soup','sandwich','wrap','kebab','shawarma','kebab','chicken','beef','fish','fries'
     ];
     
     // Check for fast food chains first
@@ -432,7 +492,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
     const profileContext = buildProfileContext();
     const enhancedMessage = `${AI_PERSONA_HEADER}\n\n[User message]: ${userMessage}${profileContext}`;
 
-    // Client-side free tier guard (3/day)
+    // Client-side free tier guard (3/day): only block when we KNOW the user is FREE
     let isActivePaid = false;
     if (userProfile?.plan && userProfile.plan !== 'FREE') {
       const expires = (userProfile as any).planExpiresAt;
@@ -445,7 +505,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
         isActivePaid = expDate > new Date();
       }
     }
-    if (!isActivePaid && dailyCount >= 5) {
+    if (userProfile && userProfile.plan === 'FREE' && dailyCount >= 3) {
       setError('Daily limit reached on Free plan. Upgrade to continue.');
       return { response: 'You have reached the daily limit for the free plan. Please upgrade to continue unlimited chats.', restaurants: [] };
     }
@@ -461,6 +521,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'x-paid-user': userProfile?.plan && userProfile.plan !== 'FREE' ? 'true' : 'false',
         },
         body: JSON.stringify({
           message: enhancedMessage,
@@ -469,6 +530,7 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
             content: msg.content
           })),
           userId: user?.uid,
+          isPaid: userProfile?.plan && userProfile.plan !== 'FREE' ? true : false,
           location: userLocation ? {
             latitude: userLocation.latitude,
             longitude: userLocation.longitude
@@ -521,6 +583,36 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
     }, 100);
   };
 
+  // Stream assistant response like ChatGPT (type-out effect)
+  const streamAssistantResponse = async (fullText: string) => {
+    // Add a new assistant message with empty content, then append progressively
+    let newIndex = -1;
+    setMessages(prev => {
+      const next = prev.concat([{ role: "assistant", content: "" } as ChatMessage]);
+      newIndex = next.length - 1;
+      return next;
+    });
+
+    // Small delay to ensure DOM node exists before updates
+    await new Promise(r => setTimeout(r, 20));
+
+    const step = 4; // chars per tick
+    const delayMs = 15; // typing speed
+    for (let i = 0; i < fullText.length; i += step) {
+      const slice = fullText.slice(0, i + step);
+      setMessages(prev => {
+        const next = prev.slice();
+        // Guard against race conditions
+        if (newIndex >= 0 && newIndex < next.length && next[newIndex].role === 'assistant') {
+          next[newIndex] = { ...next[newIndex], content: slice } as ChatMessage;
+        }
+        return next;
+      });
+      scrollToBottom();
+      await new Promise(r => setTimeout(r, delayMs));
+    }
+  };
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text || thinking) return;
@@ -553,17 +645,19 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
     try {
       const result = await callOpenAI(text, messages);
 
-      const assistantMsg: ChatMessage = {
-        role: "assistant",
-        content: result.response
-      };
+      // Stream the assistant message for ChatGPT-like experience
+      await streamAssistantResponse(result.response || "");
 
-      setMessages(prev => [...prev, assistantMsg]);
+      // Detect the agreed food, prioritizing the user's latest message
+      const keyword = extractFoodKeyword(text) || extractFoodKeyword(result.response);
+      if (keyword) {
+        setDecidedFood(keyword);
+        setMapKeyword(null);
+      }
 
-      // If the conversation appears to involve food/restaurant queries, open the map with a keyword
-      const combined = `${text}\n${result.response}`;
-      const keyword = extractFoodKeyword(combined);
-      if (keyword && userLocation && (window as any).google) {
+      // Only auto-open map if user explicitly asks for locations
+      const wantsLocations = /\b(show|suggest|nearby|where)\b.*\b(location|place|restaurant|spot)s?/i.test(text);
+      if (keyword && wantsLocations && userLocation && (window as any).google) {
         setMapKeyword(keyword);
         setShowMapDialog(true);
         setTimeout(() => initializeMap(keyword), 400);
@@ -754,6 +848,18 @@ Nutrition: Respect allergies and medical conditions. Prefer simple, budget-frien
                     {btn.label}
                   </Button>
                 ))}
+                {decidedFood && (
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="text-xs"
+                    onClick={handleSuggestLocationsForDecidedFood}
+                    disabled={thinking}
+                  >
+                    <MapPin className="h-3 w-3 mr-1" />
+                    Show places for "{decidedFood}"
+                  </Button>
+                )}
               </div>
             )}
           </div>

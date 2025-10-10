@@ -28,10 +28,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(503).json({ error: 'Payment service unavailable: PAYSTACK_SECRET_KEY not set' });
     }
 
-    const { plan, interval = 'monthly', customerEmail } = (req.body || {}) as {
+    const { plan, interval = 'monthly', customerEmail, userId } = (req.body || {}) as {
       plan?: string;
       interval?: 'monthly' | 'yearly';
       customerEmail?: string;
+      userId?: string;
     };
 
     const normalizedPlan = (plan || '').toString().toUpperCase();
@@ -39,6 +40,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     if (!customerEmail) {
       return res.status(400).json({ error: 'Customer email is required' });
+    }
+    if (!userId) {
+      return res.status(400).json({ error: 'userId is required' });
     }
     if (!['PRO', 'PREMIUM'].includes(normalizedPlan)) {
       return res.status(400).json({ error: 'Invalid plan' });
@@ -72,7 +76,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         amount,
         currency: PAYSTACK_CURRENCY,
         ...(callbackUrl ? { callback_url: callbackUrl } : {}),
-        metadata: { plan: normalizedPlan, interval: normalizedInterval }
+        metadata: { plan: normalizedPlan, interval: normalizedInterval, userId }
       })
     });
 
